@@ -1,3 +1,34 @@
-version: '3.9'
+version: '3.8'
 
-services: {}
+services:
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: product-service
+      EUREKA_CLIENT_ENABLED: "false"
+    networks:
+      - amazonlite-network
+
+  gateway-service:
+    build:
+      context: ./services/gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: gateway-service
+      EUREKA_CLIENT_ENABLED: "false"
+    depends_on:
+      - product-service
+    networks:
+      - amazonlite-network
+
+networks:
+  amazonlite-network:
+    driver: bridge
