@@ -1,0 +1,37 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+build/
+
+# Maven
+.mvn/
+log/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Docker
+docker-compose.override.yml
+
+# Maven local repository
+.m2/
+
+# Spring Boot
+spring.log
+
+# Others
+*.swp
