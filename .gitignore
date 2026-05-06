@@ -35,3 +35,9 @@ spring.log
 
 # Others
 *.swp
+
+# Auth Documentation (local reference only)
+AUTH_SYSTEM_DOCUMENTATION.md
+AUTH_QUICK_TESTING_GUIDE.md
+AUTH_IMPLEMENTATION_SUMMARY.md
+AUTH_ARCHITECTURE_DIAGRAMS.md
