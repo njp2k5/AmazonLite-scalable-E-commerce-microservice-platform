@@ -5,6 +5,27 @@ spring:
   application:
     name: product-service
 
+  # Database Configuration (Neon PostgreSQL)
+  datasource:
+    url: jdbc:postgresql://ep-crimson-hat-appwfmvz-pooler.c-7.us-east-1.aws.neon.tech:5432/neondb?sslmode=require&channel_binding=require
+    username: neondb_owner
+    password: npg_Chu10NovqHGi
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-update schema; use 'create' for fresh start, 'validate' for production
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
+
+# JWT Configuration
+jwt:
+  secret: your-super-secret-jwt-key-change-this-in-production-to-something-very-long-and-random
+  expiration: 86400000  # 24 hours in milliseconds
+
 eureka:
   client:
     enabled: false
