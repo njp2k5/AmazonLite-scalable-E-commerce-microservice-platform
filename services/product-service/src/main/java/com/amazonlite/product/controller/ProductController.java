@@ -23,6 +23,14 @@ public class ProductController {
         return productService.getProducts(page, size);
     }
 
+    @GetMapping("/page")
+    public Map<String, Object> getProductsPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return productService.getProductsPage(page, size);
+    }
+
     @GetMapping("/{id}")
     public Object getProduct(@PathVariable Long id) {
         return productService.getById(id).orElse(null);

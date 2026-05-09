@@ -31,6 +31,21 @@ public class ProductService {
         return response;
     }
 
+    public Map<String, Object> getProductsPage(int page, int size) {
+        Page<Product> result = productRepository.findAll(PageRequest.of(page, size));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", result.getContent());
+        response.put("page", result.getNumber());
+        response.put("size", result.getSize());
+        response.put("totalElements", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
+        response.put("hasNext", result.hasNext());
+        response.put("hasPrevious", result.hasPrevious());
+
+        return response;
+    }
+
     public Optional<Product> getById(Long id) {
         return productRepository.findById(id);
     }
