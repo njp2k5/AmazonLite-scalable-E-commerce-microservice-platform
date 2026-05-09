@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: optional:file:../.env[.properties]
   application:
     name: gateway-service
   cloud:
@@ -20,5 +22,5 @@ eureka:
 
 # JWT Configuration
 jwt:
-  secret: amazonlite-secret-key-for-jwt-encryption-minimum-256-bits-required
-  expiration: 86400000  # 24 hours in milliseconds
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
