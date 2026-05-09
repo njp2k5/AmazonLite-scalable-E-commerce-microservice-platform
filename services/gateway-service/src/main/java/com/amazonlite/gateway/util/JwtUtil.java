@@ -17,7 +17,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:amazonlite-secret-key-for-jwt-encryption-minimum-256-bits-required}")
+    @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration:86400000}") // 24 hours default

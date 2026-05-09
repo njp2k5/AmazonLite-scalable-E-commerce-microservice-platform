@@ -1,40 +1,52 @@
 package com.amazonlite.product.service;
 
 import com.amazonlite.product.model.Product;
+import com.amazonlite.product.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ProductService {
 
-    private final List<Product> products = new ArrayList<>();
+    private final ProductRepository productRepository;
 
-    public ProductService() {
-        for (long i = 1; i <= 50; i++) {
-            products.add(new Product(i, "Product " + i, i * 10, 100));
-        }
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
     public Map<String, Object> getProducts(int page, int size) {
-        int start = page * size;
-        int end = Math.min(start + size, products.size());
-
-        List<Product> content = products.subList(start, end);
+        Page<Product> result = productRepository.findAll(PageRequest.of(page, size));
 
         Map<String, Object> response = new HashMap<>();
-        response.put("content", content);
-        response.put("page", page);
-        response.put("size", size);
-        response.put("totalElements", products.size());
+        response.put("content", result.getContent());
+        response.put("page", result.getNumber());
+        response.put("size", result.getSize());
+        response.put("totalElements", result.getTotalElements());
 
         return response;
     }
 
-    public Product getById(Long id) {
-        return products.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+    public Map<String, Object> getProductsPage(int page, int size) {
+        Page<Product> result = productRepository.findAll(PageRequest.of(page, size));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", result.getContent());
+        response.put("page", result.getNumber());
+        response.put("size", result.getSize());
+        response.put("totalElements", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
+        response.put("hasNext", result.hasNext());
+        response.put("hasPrevious", result.hasPrevious());
+
+        return response;
+    }
+
+    public Optional<Product> getById(Long id) {
+        return productRepository.findById(id);
     }
 }
