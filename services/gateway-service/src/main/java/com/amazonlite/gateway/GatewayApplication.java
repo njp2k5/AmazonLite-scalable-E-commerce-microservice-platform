@@ -18,17 +18,24 @@ public class GatewayApplication {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder, JwtValidationFilter jwtValidationFilter) {
         return builder.routes()
                 // Auth routes - public endpoints (no JWT validation)
-                .route("auth-register", r -> r
-                        .path("/auth/register")
+                .route("auth", r -> r
+                        .path("/auth/**")
                         .uri("http://product-service:8081"))
-                .route("auth-login", r -> r
-                        .path("/auth/login")
-                        .uri("http://product-service:8081"))
-                
-                // Products route - protected endpoint (with JWT validation)
-                .route("products", r -> r
+
+                // Public product browsing routes - no JWT validation required
+                .route("products-public", r -> r
                         .path("/api/products/**")
-                        .filters(f -> f.filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
+                        .filters(f -> f.stripPrefix(1))
+                        .uri("http://product-service:8081"))
+
+                // Protected routes - JWT validation required
+                .route("cart-protected", r -> r
+                        .path("/api/cart/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
+                        .uri("http://product-service:8081"))
+                .route("buy-protected", r -> r
+                        .path("/api/buy/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
                         .uri("http://product-service:8081"))
                 .build();
     }
