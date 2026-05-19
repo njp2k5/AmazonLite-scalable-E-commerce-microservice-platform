@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
+import com.amazonlite.order.client.ProductClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -51,7 +51,7 @@ public class OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
     @Autowired
-    private WebClient.Builder webClientBuilder;
+    private ProductClient productClient;
 
     @Transactional
     public CreateOrderResponse createOrder(Long userId, CreateOrderRequest request) {
@@ -59,18 +59,23 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than 0");
         }
 
-        // Fetch product from product-service
-        Map product = webClientBuilder.build()
-            .get()
-            .uri("http://product-service/products/" + request.getProductId())
-            .retrieve()
-            .bodyToMono(Map.class)
-            .block();
+        // Fetch product from product-service using ProductClient
+        Map product = productClient.getProductById(request.getProductId());
         if (product == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product not found");
         }
-        Integer stock = (Integer) product.get("stock");
-        BigDecimal unitPrice = new BigDecimal(product.get("price").toString());
+        Integer stock = null;
+        try {
+            stock = (Integer) product.get("stock");
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product response");
+        }
+        BigDecimal unitPrice;
+        try {
+            unitPrice = new BigDecimal(product.get("price").toString());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product price");
+        }
         if (stock == null || stock < request.getQuantity()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock");
         }
