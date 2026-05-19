@@ -17,6 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.util.Map;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class OrderService {
     @Autowired
@@ -63,5 +66,8 @@ public class OrderService {
         orderItemRepository.save(item);
 
         return new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
+    }
+    public Page<Order> getOrdersByUserId(Long userId, Pageable pageable) {
+        return orderRepository.findByUserId(userId, pageable);
     }
 }
