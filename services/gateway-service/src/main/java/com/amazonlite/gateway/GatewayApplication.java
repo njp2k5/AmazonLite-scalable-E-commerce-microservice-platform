@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import com.amazonlite.gateway.filter.OrderAuthFilter;
 
 @SpringBootApplication
 public class GatewayApplication {
@@ -15,8 +16,8 @@ public class GatewayApplication {
     }
 
     @Bean
-    public RouteLocator customRouteLocator(RouteLocatorBuilder builder, JwtValidationFilter jwtValidationFilter) {
-        return builder.routes()
+        public RouteLocator customRouteLocator(RouteLocatorBuilder builder, JwtValidationFilter jwtValidationFilter, OrderAuthFilter orderAuthFilter) {
+                return builder.routes()
                 // Auth routes - public endpoints (no JWT validation)
                 .route("auth", r -> r
                         .path("/auth/**")
@@ -40,7 +41,9 @@ public class GatewayApplication {
                 // Order-service protected routes
                 .route("orders-protected", r -> r
                         .path("/api/orders/**")
-                        .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
+                        .filters(f -> f.stripPrefix(1)
+                            .filter(jwtValidationFilter.apply(new JwtValidationFilter.Config()))
+                            .filter(orderAuthFilter.apply(new OrderAuthFilter.Config())))
                         .uri("http://order-service:8083"))
                 .build();
     }
