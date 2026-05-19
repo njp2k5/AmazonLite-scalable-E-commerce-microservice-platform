@@ -27,6 +27,15 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getOrderById(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("X-User-Role") String userRole,
+            @PathVariable Long id) {
+        Order order = orderService.getOrderByIdWithAuth(id, userId, userRole);
+        return ResponseEntity.ok(order);
+    }
+
     @GetMapping("/me")
     public Page<Order> getMyOrders(
             @RequestHeader("X-User-Id") Long userId,

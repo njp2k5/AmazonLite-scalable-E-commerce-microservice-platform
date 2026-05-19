@@ -20,6 +20,8 @@ import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
+
 @Service
 public class OrderService {
     @Autowired
@@ -69,5 +71,20 @@ public class OrderService {
     }
     public Page<Order> getOrdersByUserId(Long userId, Pageable pageable) {
         return orderRepository.findByUserId(userId, pageable);
+    }
+
+    public Order getOrderByIdWithAuth(Long orderId, Long userId, String userRole) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+        }
+        Order order = orderOpt.get();
+        if ("ADMIN".equalsIgnoreCase(userRole)) {
+            return order;
+        }
+        if ("CUSTOMER".equalsIgnoreCase(userRole) && order.getUserId().equals(userId)) {
+            return order;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
     }
 }
