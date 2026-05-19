@@ -37,6 +37,11 @@ public class GatewayApplication {
                         .path("/api/buy/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
                         .uri("http://product-service:8081"))
+                // Order-service protected routes
+                .route("orders-protected", r -> r
+                        .path("/api/orders/**")
+                        .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
+                        .uri("http://order-service:8083"))
                 .build();
     }
 }
