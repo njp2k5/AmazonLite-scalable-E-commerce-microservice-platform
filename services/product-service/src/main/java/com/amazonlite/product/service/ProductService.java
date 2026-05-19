@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.NoSuchElementException;
 
 @Service
 public class ProductService {
@@ -48,5 +51,17 @@ public class ProductService {
 
     public Optional<Product> getById(Long id) {
         return productRepository.findById(id);
+    }
+
+    @Transactional
+    public int decrementStock(Long id, int quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(NoSuchElementException::new);
+        if (product.getStock() < quantity) {
+            throw new IllegalArgumentException("Insufficient stock");
+        }
+        product.setStock(product.getStock() - quantity);
+        productRepository.save(product);
+        return product.getStock();
     }
 }
