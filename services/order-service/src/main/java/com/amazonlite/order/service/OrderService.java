@@ -1,0 +1,67 @@
+package com.amazonlite.order.service;
+
+import com.amazonlite.order.dto.CreateOrderRequest;
+import com.amazonlite.order.dto.CreateOrderResponse;
+import com.amazonlite.order.model.Order;
+import com.amazonlite.order.model.OrderItem;
+import com.amazonlite.order.model.OrderStatus;
+import com.amazonlite.order.repository.OrderRepository;
+import com.amazonlite.order.repository.OrderItemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.util.Map;
+
+@Service
+public class OrderService {
+    @Autowired
+    private OrderRepository orderRepository;
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    @Transactional
+    public CreateOrderResponse createOrder(Long userId, CreateOrderRequest request) {
+        if (request.getQuantity() == null || request.getQuantity() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than 0");
+        }
+
+        // Fetch product from product-service
+        Map product = webClientBuilder.build()
+            .get()
+            .uri("http://product-service/products/" + request.getProductId())
+            .retrieve()
+            .bodyToMono(Map.class)
+            .block();
+        if (product == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product not found");
+        }
+        Integer stock = (Integer) product.get("stock");
+        BigDecimal unitPrice = new BigDecimal(product.get("price").toString());
+        if (stock == null || stock < request.getQuantity()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock");
+        }
+        BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(request.getQuantity()));
+
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setStatus(OrderStatus.PENDING);
+        order.setTotalPrice(totalPrice);
+        order = orderRepository.save(order);
+
+        OrderItem item = new OrderItem();
+        item.setOrder(order);
+        item.setProductId(request.getProductId());
+        item.setQuantity(request.getQuantity());
+        item.setUnitPrice(unitPrice);
+        orderItemRepository.save(item);
+
+        return new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
+    }
+}
