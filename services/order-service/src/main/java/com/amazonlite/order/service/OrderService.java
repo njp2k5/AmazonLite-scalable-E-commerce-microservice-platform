@@ -1,3 +1,25 @@
+    @Transactional
+    public Order cancelOrder(Long orderId, Long userId, String userRole) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+        }
+        Order order = orderOpt.get();
+        boolean isOwner = order.getUserId().equals(userId);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
+        if (!(isOwner || isAdmin)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+        }
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot cancel shipped or delivered order");
+        }
+        if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.CONFIRMED) {
+            order.setStatus(OrderStatus.CANCELLED);
+            return orderRepository.save(order);
+        }
+        // If already cancelled, just return
+        return order;
+    }
 package com.amazonlite.order.service;
 
 import com.amazonlite.order.dto.CreateOrderRequest;
