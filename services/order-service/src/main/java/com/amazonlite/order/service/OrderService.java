@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.amazonlite.order.client.ProductClient;
+import com.amazonlite.order.client.ProductStockClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -53,48 +54,58 @@ public class OrderService {
     @Autowired
     private ProductClient productClient;
 
+    @Autowired
+    private ProductStockClient productStockClient;
+
     @Transactional
     public CreateOrderResponse createOrder(Long userId, CreateOrderRequest request) {
         if (request.getQuantity() == null || request.getQuantity() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be greater than 0");
         }
-
-        // Fetch product from product-service using ProductClient
-        Map product = productClient.getProductById(request.getProductId());
-        if (product == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product not found");
-        }
-        Integer stock = null;
         try {
-            stock = (Integer) product.get("stock");
+            // 1. fetch product
+            Map product = productClient.getProductById(request.getProductId());
+            if (product == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Product not found");
+            }
+            // 2. validate stock
+            Integer stock = null;
+            try {
+                stock = (Integer) product.get("stock");
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product response");
+            }
+            BigDecimal unitPrice;
+            try {
+                unitPrice = new BigDecimal(product.get("price").toString());
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product price");
+            }
+            if (stock == null || stock < request.getQuantity()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock");
+            }
+            // 3. call decrement-stock
+            productStockClient.decrementStock(request.getProductId(), request.getQuantity());
+            // 4. create order
+            BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(request.getQuantity()));
+            Order order = new Order();
+            order.setUserId(userId);
+            order.setStatus(OrderStatus.PENDING);
+            order.setTotalPrice(totalPrice);
+            order = orderRepository.save(order);
+            // 5. create order item
+            OrderItem item = new OrderItem();
+            item.setOrder(order);
+            item.setProductId(request.getProductId());
+            item.setQuantity(request.getQuantity());
+            item.setUnitPrice(unitPrice);
+            orderItemRepository.save(item);
+            // 6. commit (handled by @Transactional)
+            return new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product response");
+            // Rollback handled by @Transactional
+            throw e;
         }
-        BigDecimal unitPrice;
-        try {
-            unitPrice = new BigDecimal(product.get("price").toString());
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Invalid product price");
-        }
-        if (stock == null || stock < request.getQuantity()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Insufficient stock");
-        }
-        BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(request.getQuantity()));
-
-        Order order = new Order();
-        order.setUserId(userId);
-        order.setStatus(OrderStatus.PENDING);
-        order.setTotalPrice(totalPrice);
-        order = orderRepository.save(order);
-
-        OrderItem item = new OrderItem();
-        item.setOrder(order);
-        item.setProductId(request.getProductId());
-        item.setQuantity(request.getQuantity());
-        item.setUnitPrice(unitPrice);
-        orderItemRepository.save(item);
-
-        return new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
     }
     public Page<Order> getOrdersByUserId(Long userId, Pageable pageable) {
         return orderRepository.findByUserId(userId, pageable);
