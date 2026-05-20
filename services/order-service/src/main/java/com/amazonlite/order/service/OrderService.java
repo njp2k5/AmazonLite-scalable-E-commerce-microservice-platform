@@ -1,25 +1,3 @@
-    @Transactional
-    public Order cancelOrder(Long orderId, Long userId, String userRole) {
-        Optional<Order> orderOpt = orderRepository.findById(orderId);
-        if (orderOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
-        }
-        Order order = orderOpt.get();
-        boolean isOwner = order.getUserId().equals(userId);
-        boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
-        if (!(isOwner || isAdmin)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
-        }
-        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot cancel shipped or delivered order");
-        }
-        if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.CONFIRMED) {
-            order.setStatus(OrderStatus.CANCELLED);
-            return orderRepository.save(order);
-        }
-        // If already cancelled, just return
-        return order;
-    }
 package com.amazonlite.order.service;
 
 import com.amazonlite.order.dto.CreateOrderRequest;
@@ -102,7 +80,7 @@ public class OrderService {
             order.setUserId(userId);
             order.setStatus(OrderStatus.PENDING);
             order.setTotalPrice(totalPrice);
-            order = orderRepository.save(order);
+            final Order savedOrder = orderRepository.save(order);
             // 5. create order item
             OrderItem item = new OrderItem();
             item.setOrder(order);
@@ -111,18 +89,18 @@ public class OrderService {
             item.setUnitPrice(unitPrice);
             orderItemRepository.save(item);
             // 6. commit (handled by @Transactional)
-            CreateOrderResponse response = new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
+            CreateOrderResponse response = new CreateOrderResponse(savedOrder.getId(), savedOrder.getStatus().name(), savedOrder.getTotalPrice());
 
             // Publish OrderCreatedEvent after transaction commits
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     try {
-                        com.amazonlite.shared.events.OrderCreatedEvent event = new com.amazonlite.shared.events.OrderCreatedEvent(
-                                String.valueOf(order.getId()), String.valueOf(order.getUserId()), order.getTotalPrice(), java.time.Instant.now());
-                        orderEventPublisher.publishOrderCreated(event);
+                            com.amazonlite.shared.events.OrderCreatedEvent event = new com.amazonlite.shared.events.OrderCreatedEvent(
+                                    String.valueOf(savedOrder.getId()), String.valueOf(savedOrder.getUserId()), savedOrder.getTotalPrice(), java.time.Instant.now());
+                            orderEventPublisher.publishOrderCreated(event);
                     } catch (Exception ex) {
-                        logger.error("Exception while publishing OrderCreatedEvent for orderId={}", order.getId(), ex);
+                            logger.error("Exception while publishing OrderCreatedEvent for orderId={}", savedOrder.getId(), ex);
                     }
                 }
             });
@@ -150,5 +128,28 @@ public class OrderService {
             return order;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+    }
+
+    @Transactional
+    public Order cancelOrder(Long orderId, Long userId, String userRole) {
+        Optional<Order> orderOpt = orderRepository.findById(orderId);
+        if (orderOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+        }
+        Order order = orderOpt.get();
+        boolean isOwner = order.getUserId().equals(userId);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(userRole);
+        if (!(isOwner || isAdmin)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Unauthorized");
+        }
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot cancel shipped or delivered order");
+        }
+        if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.CONFIRMED) {
+            order.setStatus(OrderStatus.CANCELLED);
+            return orderRepository.save(order);
+        }
+        // If already cancelled, just return
+        return order;
     }
 }

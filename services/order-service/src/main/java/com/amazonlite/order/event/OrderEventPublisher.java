@@ -9,6 +9,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class OrderEventPublisher {
@@ -23,52 +24,35 @@ public class OrderEventPublisher {
         this.topic = topic;
     }
 
-    public void publishOrderCreated(OrderCreatedEvent event, String requestId) {
+    public void publishOrderCreated(OrderCreatedEvent event) {
         try {
-            ListenableFuture<SendResult<String, OrderCreatedEvent>> future = kafkaTemplate.send(topic, event);
-            future.addCallback(new ListenableFutureCallback<>() {
-                @Override
-                public void onSuccess(SendResult<String, OrderCreatedEvent> result) {
-                    if (result != null && result.getRecordMetadata() != null) {
-                        logger.info("{" +
-                                "\"requestId\": \"{}\", " +
-                                "\"eventType\": \"OrderCreated\", " +
-                                "\"topic\": \"{}\", " +
-                                "\"orderId\": \"{}\", " +
-                                "\"timestamp\": \"{}\" " +
-                                "}", requestId, topic, event.getOrderId(), result.getRecordMetadata().timestamp());
-                    } else {
-                        logger.info("{" +
-                                "\"requestId\": \"{}\", " +
-                                "\"eventType\": \"OrderCreated\", " +
-                                "\"topic\": \"{}\", " +
-                                "\"orderId\": \"{}\", " +
-                                "\"timestamp\": \"{}\" " +
-                                "}", requestId, topic, event.getOrderId(), System.currentTimeMillis());
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable ex) {
+            CompletableFuture<SendResult<String, OrderCreatedEvent>> future = kafkaTemplate.send(topic, event);
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    logger.info("{" +
+                            "\"eventType\": \"OrderCreated\", " +
+                            "\"topic\": \"{}\", " +
+                            "\"orderId\": \"{}\", " +
+                            "\"timestamp\": \"{}\" " +
+                            "}", topic, event.getOrderId(), System.currentTimeMillis());
+                } else {
                     logger.error("{" +
-                            "\"requestId\": \"{}\", " +
                             "\"eventType\": \"OrderCreated\", " +
                             "\"topic\": \"{}\", " +
                             "\"orderId\": \"{}\", " +
                             "\"timestamp\": \"{}\", " +
                             "\"error\": \"{}\" " +
-                            "}", requestId, topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
+                            "}", topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
                 }
             });
         } catch (Exception ex) {
             logger.error("{" +
-                    "\"requestId\": \"{}\", " +
                     "\"eventType\": \"OrderCreated\", " +
                     "\"topic\": \"{}\", " +
                     "\"orderId\": \"{}\", " +
                     "\"timestamp\": \"{}\", " +
                     "\"error\": \"{}\" " +
-                    "}", requestId, topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
+                    "}", topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
         }
     }
 }
