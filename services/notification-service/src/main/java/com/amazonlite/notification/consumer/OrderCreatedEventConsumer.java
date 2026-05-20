@@ -11,9 +11,17 @@ public class OrderCreatedEventConsumer {
     private static final Logger logger = LoggerFactory.getLogger(OrderCreatedEventConsumer.class);
 
     @KafkaListener(topics = "order.created", groupId = "notification-service-group", containerFactory = "kafkaListenerContainerFactory")
-    public void consume(OrderCreatedEvent event) {
-        logger.info("Received OrderCreatedEvent: orderId={}, userId={}, totalPrice={}, createdAt={}",
-                event.getOrderId(), event.getUserId(), event.getTotalPrice(), event.getCreatedAt());
+    public void consume(OrderCreatedEvent event, String requestId) {
+        logger.info("{" +
+                "\"requestId\": \"{}\", " +
+                "\"eventType\": \"OrderCreated\", " +
+                "\"topic\": \"order.created\", " +
+                "\"orderId\": \"{}\", " +
+                "\"timestamp\": \"{}\" " +
+                "}",
+
+                requestId, event.getOrderId(), System.currentTimeMillis());
+
         // Simulate sending email notification
         logger.info("Sending order confirmation for order {} to user {}", event.getOrderId(), event.getUserId());
     }

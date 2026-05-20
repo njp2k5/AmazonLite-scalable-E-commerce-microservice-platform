@@ -23,26 +23,52 @@ public class OrderEventPublisher {
         this.topic = topic;
     }
 
-    public void publishOrderCreated(OrderCreatedEvent event) {
+    public void publishOrderCreated(OrderCreatedEvent event, String requestId) {
         try {
             ListenableFuture<SendResult<String, OrderCreatedEvent>> future = kafkaTemplate.send(topic, event);
             future.addCallback(new ListenableFutureCallback<>() {
                 @Override
                 public void onSuccess(SendResult<String, OrderCreatedEvent> result) {
                     if (result != null && result.getRecordMetadata() != null) {
-                        logger.info("event=OrderCreatedPublished orderId={} partition={} offset={}", event.getOrderId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                        logger.info("{" +
+                                "\"requestId\": \"{}\", " +
+                                "\"eventType\": \"OrderCreated\", " +
+                                "\"topic\": \"{}\", " +
+                                "\"orderId\": \"{}\", " +
+                                "\"timestamp\": \"{}\" " +
+                                "}", requestId, topic, event.getOrderId(), result.getRecordMetadata().timestamp());
                     } else {
-                        logger.info("event=OrderCreatedPublished orderId={} (no metadata)", event.getOrderId());
+                        logger.info("{" +
+                                "\"requestId\": \"{}\", " +
+                                "\"eventType\": \"OrderCreated\", " +
+                                "\"topic\": \"{}\", " +
+                                "\"orderId\": \"{}\", " +
+                                "\"timestamp\": \"{}\" " +
+                                "}", requestId, topic, event.getOrderId(), System.currentTimeMillis());
                     }
                 }
 
                 @Override
                 public void onFailure(Throwable ex) {
-                    logger.error("event=OrderCreatedPublishFailed orderId={}", event.getOrderId(), ex);
+                    logger.error("{" +
+                            "\"requestId\": \"{}\", " +
+                            "\"eventType\": \"OrderCreated\", " +
+                            "\"topic\": \"{}\", " +
+                            "\"orderId\": \"{}\", " +
+                            "\"timestamp\": \"{}\", " +
+                            "\"error\": \"{}\" " +
+                            "}", requestId, topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
                 }
             });
         } catch (Exception ex) {
-            logger.error("event=OrderCreatedPublishException orderId={}", event.getOrderId(), ex);
+            logger.error("{" +
+                    "\"requestId\": \"{}\", " +
+                    "\"eventType\": \"OrderCreated\", " +
+                    "\"topic\": \"{}\", " +
+                    "\"orderId\": \"{}\", " +
+                    "\"timestamp\": \"{}\", " +
+                    "\"error\": \"{}\" " +
+                    "}", requestId, topic, event.getOrderId(), System.currentTimeMillis(), ex.getMessage());
         }
     }
 }
