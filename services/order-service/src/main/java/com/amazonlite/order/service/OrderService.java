@@ -33,6 +33,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.amazonlite.order.client.ProductClient;
 import com.amazonlite.order.client.ProductStockClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,6 +61,11 @@ public class OrderService {
 
     @Autowired
     private ProductStockClient productStockClient;
+
+    @Autowired
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
 
     @Transactional
     public CreateOrderResponse createOrder(Long userId, CreateOrderRequest request) {
@@ -101,7 +111,26 @@ public class OrderService {
             item.setUnitPrice(unitPrice);
             orderItemRepository.save(item);
             // 6. commit (handled by @Transactional)
-            return new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
+            CreateOrderResponse response = new CreateOrderResponse(order.getId(), order.getStatus().name(), order.getTotalPrice());
+
+            // Publish OrderCreatedEvent after transaction commits
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        com.amazonlite.shared.events.OrderCreatedEvent event = new com.amazonlite.shared.events.OrderCreatedEvent(
+                                String.valueOf(order.getId()), String.valueOf(order.getUserId()), order.getTotalPrice(), java.time.Instant.now());
+                        kafkaTemplate.send("order.created", event).addCallback(
+                                success -> logger.info("Published OrderCreatedEvent for orderId={}", event.getOrderId()),
+                                ex -> logger.error("Failed to publish OrderCreatedEvent for orderId={}", event.getOrderId(), ex)
+                        );
+                    } catch (Exception ex) {
+                        logger.error("Exception while publishing OrderCreatedEvent for orderId={}", order.getId(), ex);
+                    }
+                }
+            });
+
+            return response;
         } catch (Exception e) {
             // Rollback handled by @Transactional
             throw e;
