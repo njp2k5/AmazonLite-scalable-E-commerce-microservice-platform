@@ -63,7 +63,7 @@ public class OrderService {
     private ProductStockClient productStockClient;
 
     @Autowired
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private com.amazonlite.order.event.OrderEventPublisher orderEventPublisher;
 
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
 
@@ -120,10 +120,7 @@ public class OrderService {
                     try {
                         com.amazonlite.shared.events.OrderCreatedEvent event = new com.amazonlite.shared.events.OrderCreatedEvent(
                                 String.valueOf(order.getId()), String.valueOf(order.getUserId()), order.getTotalPrice(), java.time.Instant.now());
-                        kafkaTemplate.send("order.created", event).addCallback(
-                                success -> logger.info("Published OrderCreatedEvent for orderId={}", event.getOrderId()),
-                                ex -> logger.error("Failed to publish OrderCreatedEvent for orderId={}", event.getOrderId(), ex)
-                        );
+                        orderEventPublisher.publishOrderCreated(event);
                     } catch (Exception ex) {
                         logger.error("Exception while publishing OrderCreatedEvent for orderId={}", order.getId(), ex);
                     }
