@@ -11,18 +11,23 @@ public class OrderCreatedEventConsumer {
     private static final Logger logger = LoggerFactory.getLogger(OrderCreatedEventConsumer.class);
 
     @KafkaListener(topics = "order.created", groupId = "notification-service-group", containerFactory = "kafkaListenerContainerFactory")
-    public void consume(OrderCreatedEvent event, String requestId) {
-        logger.info("{" +
-                "\"requestId\": \"{}\", " +
-                "\"eventType\": \"OrderCreated\", " +
-                "\"topic\": \"order.created\", " +
-                "\"orderId\": \"{}\", " +
-                "\"timestamp\": \"{}\" " +
-                "}",
+    public void consume(OrderCreatedEvent event) {
+        String corr = event.getCorrelationId();
+        org.slf4j.MDC.put("correlationId", corr);
+        try {
+            logger.info("{" +
+                    "\"correlationId\": \"{}\", " +
+                    "\"eventType\": \"OrderCreated\", " +
+                    "\"topic\": \"order.created\", " +
+                    "\"orderId\": \"{}\", " +
+                    "\"timestamp\": \"{}\" " +
+                    "}",
+                    corr, event.getOrderId(), System.currentTimeMillis());
 
-                requestId, event.getOrderId(), System.currentTimeMillis());
-
-        // Simulate sending email notification
-        logger.info("Sending order confirmation for order {} to user {}", event.getOrderId(), event.getUserId());
+            // Simulate sending email notification
+            logger.info("Sending order confirmation for order {} to user {}", event.getOrderId(), event.getUserId());
+        } finally {
+            org.slf4j.MDC.remove("correlationId");
+        }
     }
 }

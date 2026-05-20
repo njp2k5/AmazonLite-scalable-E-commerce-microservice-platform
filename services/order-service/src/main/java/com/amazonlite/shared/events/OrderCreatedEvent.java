@@ -9,15 +9,23 @@ public class OrderCreatedEvent {
     private String userId;
     private BigDecimal totalPrice;
     private Instant createdAt;
+    private String correlationId;
 
     public OrderCreatedEvent() {
     }
-
     public OrderCreatedEvent(String orderId, String userId, BigDecimal totalPrice, Instant createdAt) {
         this.orderId = orderId;
         this.userId = userId;
         this.totalPrice = totalPrice;
         this.createdAt = createdAt;
+    }
+
+    public OrderCreatedEvent(String orderId, String userId, BigDecimal totalPrice, Instant createdAt, String correlationId) {
+        this.orderId = orderId;
+        this.userId = userId;
+        this.totalPrice = totalPrice;
+        this.createdAt = createdAt;
+        this.correlationId = correlationId;
     }
 
     public String getOrderId() {
@@ -50,5 +58,13 @@ public class OrderCreatedEvent {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getCorrelationId() {
+        return correlationId;
+    }
+
+    public void setCorrelationId(String correlationId) {
+        this.correlationId = correlationId;
     }
 }

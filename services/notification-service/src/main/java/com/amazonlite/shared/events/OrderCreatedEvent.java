@@ -13,6 +13,7 @@ public class OrderCreatedEvent {
 
     public OrderCreatedEvent() {
     }
+
     public OrderCreatedEvent(String orderId, String userId, BigDecimal totalPrice, Instant createdAt) {
         this.orderId = orderId;
         this.userId = userId;

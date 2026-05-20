@@ -96,8 +96,9 @@ public class OrderService {
                 @Override
                 public void afterCommit() {
                     try {
+                            String corr = org.slf4j.MDC.get("correlationId");
                             com.amazonlite.shared.events.OrderCreatedEvent event = new com.amazonlite.shared.events.OrderCreatedEvent(
-                                    String.valueOf(savedOrder.getId()), String.valueOf(savedOrder.getUserId()), savedOrder.getTotalPrice(), java.time.Instant.now());
+                                String.valueOf(savedOrder.getId()), String.valueOf(savedOrder.getUserId()), savedOrder.getTotalPrice(), java.time.Instant.now(), corr);
                             orderEventPublisher.publishOrderCreated(event);
                     } catch (Exception ex) {
                             logger.error("Exception while publishing OrderCreatedEvent for orderId={}", savedOrder.getId(), ex);
