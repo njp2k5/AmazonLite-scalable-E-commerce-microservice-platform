@@ -17,11 +17,24 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.KafkaListenerErrorHandler;
+import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
+import org.springframework.kafka.listener.KafkaListenerContainerFactory;
+import org.springframework.util.backoff.ExponentialBackOff;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
 public class KafkaConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(KafkaConfig.class);
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -60,6 +73,29 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, NotificationEvent> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, NotificationEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.setCommonErrorHandler(errorHandler());
         return factory;
+    }
+
+    @Bean
+    public DefaultErrorHandler errorHandler() {
+        // Exponential backoff: initial interval 1s, multiplier 2, max interval 8s, max retries 3
+        ExponentialBackOff backOff = new ExponentialBackOff(1000L, 2.0);
+        backOff.setMaxInterval(8000L);
+        backOff.setMaxElapsedTime(30000L); // 30s max total
+
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
+                kafkaTemplate(),
+                (record, ex) -> {
+                    logger.error("Sending to DLT due to unrecoverable error after retries. Topic: {} Partition: {} Offset: {} Exception: {}", record.topic(), record.partition(), record.offset(), ex.getMessage());
+                    return new TopicPartition("order.created.dlt", record.partition() == null ? 0 : record.partition());
+                }
+        );
+
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, backOff);
+        errorHandler.setRetryListeners((record, ex, deliveryAttempt) -> {
+            logger.warn("Kafka message consumption failed. Attempt {}. Topic: {} Partition: {} Offset: {} Exception: {}", deliveryAttempt, record.topic(), record.partition(), record.offset(), ex.getMessage());
+        });
+        return errorHandler;
     }
 }
