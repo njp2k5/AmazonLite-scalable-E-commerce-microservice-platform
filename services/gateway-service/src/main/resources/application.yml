@@ -10,21 +10,21 @@ spring:
     gateway:
       routes:
         - id: product-service
-          uri: http://product-service:8081
+          uri: ${PRODUCT_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/products/**
           filters:
             - StripPrefix=1
 
         - id: order-service
-          uri: http://order-service:8083
+          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/orders/**
           filters:
             - StripPrefix=1
 
         - id: notification-service
-          uri: http://notification-service:8084
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
           predicates:
             - Path=/api/notifications/**
           filters:
@@ -41,3 +41,17 @@ eureka:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+
+# Springdoc OpenAPI Aggregation Configuration
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    urls:
+      - name: Gateway Service
+        url: /v3/api-docs
+      - name: Product Service
+        url: /product-service/v3/api-docs
+
