@@ -8,6 +8,8 @@ services:
     container_name: product-service
     ports:
       - "8081:8081"
+    env_file:
+      - ./services/.env
     environment:
       SPRING_APPLICATION_NAME: product-service
       EUREKA_CLIENT_ENABLED: "false"
@@ -21,11 +23,43 @@ services:
     container_name: gateway-service
     ports:
       - "8080:8080"
+    env_file:
+      - ./services/.env
     environment:
       SPRING_APPLICATION_NAME: gateway-service
       EUREKA_CLIENT_ENABLED: "false"
     depends_on:
       - product-service
+    networks:
+      - amazonlite-network
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./services/.env
+    environment:
+      SPRING_APPLICATION_NAME: order-service
+      EUREKA_CLIENT_ENABLED: "false"
+    networks:
+      - amazonlite-network
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    env_file:
+      - ./services/.env
+    environment:
+      SPRING_APPLICATION_NAME: notification-service
+      EUREKA_CLIENT_ENABLED: "false"
     networks:
       - amazonlite-network
 

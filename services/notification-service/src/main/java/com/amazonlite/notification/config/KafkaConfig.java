@@ -23,7 +23,6 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.listener.KafkaListenerErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
-import org.springframework.kafka.listener.KafkaListenerContainerFactory;
 import org.springframework.util.backoff.ExponentialBackOff;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +87,7 @@ public class KafkaConfig {
                 kafkaTemplate(),
                 (record, ex) -> {
                     logger.error("Sending to DLT due to unrecoverable error after retries. Topic: {} Partition: {} Offset: {} Exception: {}", record.topic(), record.partition(), record.offset(), ex.getMessage());
-                    return new TopicPartition("order.created.dlt", record.partition() == null ? 0 : record.partition());
+                    return new TopicPartition("order.created.dlt", record.partition());
                 }
         );
 

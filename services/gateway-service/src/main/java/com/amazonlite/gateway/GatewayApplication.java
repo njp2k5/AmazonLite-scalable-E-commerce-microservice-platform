@@ -17,6 +17,9 @@ public class GatewayApplication {
     @org.springframework.beans.factory.annotation.Value("${app.services.order-service-url:http://localhost:8083}")
     private String orderServiceUrl;
 
+    @org.springframework.beans.factory.annotation.Value("${app.services.notification-service-url:http://localhost:8084}")
+    private String notificationServiceUrl;
+
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
     }
@@ -40,6 +43,18 @@ public class GatewayApplication {
                         .path("/product-service/v3/api-docs")
                         .filters(f -> f.setPath("/v3/api-docs"))
                         .uri(productServiceUrl))
+
+                // OpenAPI Docs route for order-service
+                .route("order-service-api-docs", r -> r
+                        .path("/order-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(orderServiceUrl))
+
+                // OpenAPI Docs route for notification-service
+                .route("notification-service-api-docs", r -> r
+                        .path("/notification-service/v3/api-docs")
+                        .filters(f -> f.setPath("/v3/api-docs"))
+                        .uri(notificationServiceUrl))
 
                 // Protected routes - JWT validation required
                 .route("cart-protected", r -> r
