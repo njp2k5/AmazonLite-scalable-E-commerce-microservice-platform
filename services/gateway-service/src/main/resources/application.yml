@@ -10,21 +10,21 @@ spring:
     gateway:
       routes:
         - id: product-service
-          uri: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+          uri: lb://product-service
           predicates:
             - Path=/api/products/**
           filters:
             - StripPrefix=1
 
         - id: order-service
-          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          uri: lb://order-service
           predicates:
             - Path=/api/orders/**
           filters:
             - StripPrefix=1
 
         - id: notification-service
-          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+          uri: lb://notification-service
           predicates:
             - Path=/api/notifications/**
           filters:
@@ -35,7 +35,9 @@ spring:
 
 eureka:
   client:
-    enabled: false
+    enabled: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
 
 # JWT Configuration
 jwt:
