@@ -12,6 +12,26 @@ services:
     networks:
       - amazonlite-network
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: amazonlite
+    ports:
+      - "5432:5432"
+    networks:
+      - amazonlite-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - amazonlite-network
+
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka
