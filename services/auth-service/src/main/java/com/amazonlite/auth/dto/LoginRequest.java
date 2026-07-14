@@ -1,4 +1,4 @@
-package com.amazonlite.product.dto;
+package com.amazonlite.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,6 +1,6 @@
-package com.amazonlite.product.repository;
+package com.amazonlite.auth.repository;
 
-import com.amazonlite.product.model.User;
+import com.amazonlite.auth.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.amazonlite.product.security;
+package com.amazonlite.auth.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

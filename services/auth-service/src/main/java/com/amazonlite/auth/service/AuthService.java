@@ -1,11 +1,11 @@
-package com.amazonlite.product.service;
+package com.amazonlite.auth.service;
 
-import com.amazonlite.product.dto.LoginRequest;
-import com.amazonlite.product.dto.LoginResponse;
-import com.amazonlite.product.dto.RegisterRequest;
-import com.amazonlite.product.model.User;
-import com.amazonlite.product.repository.UserRepository;
-import com.amazonlite.product.security.JwtUtil;
+import com.amazonlite.auth.dto.LoginRequest;
+import com.amazonlite.auth.dto.LoginResponse;
+import com.amazonlite.auth.dto.RegisterRequest;
+import com.amazonlite.auth.model.User;
+import com.amazonlite.auth.repository.UserRepository;
+import com.amazonlite.auth.security.JwtUtil;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;

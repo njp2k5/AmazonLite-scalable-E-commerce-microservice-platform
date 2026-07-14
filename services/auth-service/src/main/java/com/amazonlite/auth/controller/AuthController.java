@@ -1,9 +1,9 @@
-package com.amazonlite.product.controller;
+package com.amazonlite.auth.controller;
 
-import com.amazonlite.product.dto.LoginRequest;
-import com.amazonlite.product.dto.LoginResponse;
-import com.amazonlite.product.dto.RegisterRequest;
-import com.amazonlite.product.service.AuthService;
+import com.amazonlite.auth.dto.LoginRequest;
+import com.amazonlite.auth.dto.LoginResponse;
+import com.amazonlite.auth.dto.RegisterRequest;
+import com.amazonlite.auth.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
