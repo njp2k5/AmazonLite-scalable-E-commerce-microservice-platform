@@ -53,6 +53,16 @@ services:
     networks:
       - amazonlite-network
 
+  registry-service:
+    build:
+      context: ../../services/registry-service
+      dockerfile: Dockerfile
+    container_name: registry-service
+    ports:
+      - "8761:8761"
+    networks:
+      - amazonlite-network
+
   product-service:
     build:
       context: ../../services/product-service
@@ -64,7 +74,10 @@ services:
       - ../../services/.env
     environment:
       SPRING_APPLICATION_NAME: product-service
-      EUREKA_CLIENT_ENABLED: "false"
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    depends_on:
+      - registry-service
     networks:
       - amazonlite-network
 
