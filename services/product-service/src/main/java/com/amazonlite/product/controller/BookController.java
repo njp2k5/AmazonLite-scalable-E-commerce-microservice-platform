@@ -1,6 +1,6 @@
 package com.amazonlite.product.controller;
 
-import com.amazonlite.product.service.ProductService;
+import com.amazonlite.product.service.BookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/products")
-public class ProductController {
+@RequestMapping("/Books")
+public class BookController {
 
-    private final ProductService productService;
+    private final BookService BookService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public BookController(BookService BookService) {
+        this.BookService = BookService;
     }
 
     @GetMapping
@@ -22,7 +22,7 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.getProducts(page, size);
+        return BookService.getProducts(page, size);
     }
 
     @GetMapping("/page")
@@ -30,12 +30,12 @@ public class ProductController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return productService.getProductsPage(page, size);
+        return BookService.getProductsPage(page, size);
     }
 
     @GetMapping("/{id}")
     public Object getProduct(@PathVariable Long id) {
-        return productService.getById(id).orElse(null);
+        return BookService.getById(id).orElse(null);
     }
 
     @PatchMapping("/{id}/decrement-stock")
@@ -45,12 +45,12 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid quantity");
         }
         try {
-            int updatedStock = productService.decrementStock(id, quantity);
+            int updatedStock = BookService.decrementStock(id, quantity);
             return ResponseEntity.ok(Map.of("stock", updatedStock));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (java.util.NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found");
         }
     }
 }

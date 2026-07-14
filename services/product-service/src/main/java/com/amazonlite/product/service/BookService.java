@@ -1,7 +1,7 @@
 package com.amazonlite.product.service;
 
-import com.amazonlite.product.model.Product;
-import com.amazonlite.product.repository.ProductRepository;
+import com.amazonlite.product.model.Book;
+import com.amazonlite.product.repository.BookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -14,16 +14,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.NoSuchElementException;
 
 @Service
-public class ProductService {
+public class BookService {
 
-    private final ProductRepository productRepository;
+    private final BookRepository BookRepository;
 
-    public ProductService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
+    public BookService(BookRepository BookRepository) {
+        this.BookRepository = BookRepository;
     }
 
     public Map<String, Object> getProducts(int page, int size) {
-        Page<Product> result = productRepository.findAll(PageRequest.of(page, size));
+        Page<Book> result = BookRepository.findAll(PageRequest.of(page, size));
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", result.getContent());
@@ -35,7 +35,7 @@ public class ProductService {
     }
 
     public Map<String, Object> getProductsPage(int page, int size) {
-        Page<Product> result = productRepository.findAll(PageRequest.of(page, size));
+        Page<Book> result = BookRepository.findAll(PageRequest.of(page, size));
 
         Map<String, Object> response = new HashMap<>();
         response.put("content", result.getContent());
@@ -49,19 +49,19 @@ public class ProductService {
         return response;
     }
 
-    public Optional<Product> getById(Long id) {
-        return productRepository.findById(id);
+    public Optional<Book> getById(Long id) {
+        return BookRepository.findById(id);
     }
 
     @Transactional
     public int decrementStock(Long id, int quantity) {
-        Product product = productRepository.findById(id)
+        Book Book = BookRepository.findById(id)
                 .orElseThrow(NoSuchElementException::new);
-        if (product.getStock() < quantity) {
+        if (Book.getStock() < quantity) {
             throw new IllegalArgumentException("Insufficient stock");
         }
-        product.setStock(product.getStock() - quantity);
-        productRepository.save(product);
-        return product.getStock();
+        Book.setStock(Book.getStock() - quantity);
+        BookRepository.save(Book);
+        return Book.getStock();
     }
 }

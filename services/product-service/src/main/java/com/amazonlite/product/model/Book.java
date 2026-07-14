@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-    name = "products",
+    name = "Books",
     indexes = {
         @Index(name = "idx_products_name", columnList = "name")
     }
 )
-public class Product {
+public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -47,16 +47,40 @@ public class Product {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Product() {
+    @Column(nullable = false, unique = true, length = 20)
+    private String isbn;
+
+    @Column(nullable = false, length = 200)
+    private String author;
+
+    @Column(length = 200)
+    private String publisher;
+
+    @Column(length = 50)
+    private String format;
+
+    @Column
+    private Integer pages;
+
+    @Column(length = 50)
+    private String language;
+
+    public Book() {
     }
 
-    public Product(String name, String description, double price, int stock, String category, String imageUrl) {
+    public Book(String name, String description, double price, int stock, String category, String imageUrl, String isbn, String author, String publisher, String format, Integer pages, String language) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.category = category;
         this.imageUrl = imageUrl;
+        this.isbn = isbn;
+        this.author = author;
+        this.publisher = publisher;
+        this.format = format;
+        this.pages = pages;
+        this.language = language;
     }
 
     @PrePersist
@@ -132,5 +156,53 @@ public class Product {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 }
