@@ -63,6 +63,25 @@ services:
     networks:
       - amazonlite-network
 
+  auth-service:
+    build:
+      context: ../../services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - ../../services/.env
+    environment:
+      SPRING_APPLICATION_NAME: auth-service
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    depends_on:
+      - registry-service
+      - postgres
+    networks:
+      - amazonlite-network
+
   product-service:
     build:
       context: ../../services/product-service
