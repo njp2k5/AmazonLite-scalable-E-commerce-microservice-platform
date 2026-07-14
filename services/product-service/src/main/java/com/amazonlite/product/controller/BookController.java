@@ -8,13 +8,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/Books")
+@RequestMapping("/books")
 public class BookController {
 
-    private final BookService BookService;
+    private final BookService bookService;
 
-    public BookController(BookService BookService) {
-        this.BookService = BookService;
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
     }
 
     @GetMapping
@@ -22,7 +22,20 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return BookService.getProducts(page, size);
+        return bookService.getProducts(page, size);
+    }
+
+    @GetMapping("/search")
+    public Map<String, Object> searchBooks(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return bookService.searchBooks(name, author, category, minPrice, maxPrice, page, size);
     }
 
     @GetMapping("/page")
@@ -30,12 +43,12 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return BookService.getProductsPage(page, size);
+        return bookService.getProductsPage(page, size);
     }
 
     @GetMapping("/{id}")
     public Object getProduct(@PathVariable Long id) {
-        return BookService.getById(id).orElse(null);
+        return bookService.getById(id).orElse(null);
     }
 
     @PatchMapping("/{id}/decrement-stock")
@@ -45,7 +58,7 @@ public class BookController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid quantity");
         }
         try {
-            int updatedStock = BookService.decrementStock(id, quantity);
+            int updatedStock = bookService.decrementStock(id, quantity);
             return ResponseEntity.ok(Map.of("stock", updatedStock));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());

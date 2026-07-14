@@ -64,4 +64,36 @@ public class BookService {
         BookRepository.save(Book);
         return Book.getStock();
     }
+
+    public Map<String, Object> searchBooks(String name, String author, String category, Double minPrice, Double maxPrice, int page, int size) {
+        org.springframework.data.jpa.domain.Specification<Book> spec = (root, query, cb) -> {
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            if (name != null && !name.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+            }
+            if (author != null && !author.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("author")), "%" + author.toLowerCase() + "%"));
+            }
+            if (category != null && !category.isEmpty()) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (minPrice != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        Page<Book> result = BookRepository.findAll(spec, PageRequest.of(page, size));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", result.getContent());
+        response.put("page", result.getNumber());
+        response.put("size", result.getSize());
+        response.put("totalElements", result.getTotalElements());
+        response.put("totalPages", result.getTotalPages());
+        return response;
+    }
 }
