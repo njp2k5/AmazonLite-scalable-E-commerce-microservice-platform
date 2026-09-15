@@ -96,4 +96,11 @@ public class BookService {
         response.put("totalPages", result.getTotalPages());
         return response;
     }
+    public java.util.List<Book> getBestsellers() {
+        return BookRepository.findByIsBestsellerTrue();
+    }
+
+    public Optional<Book> getFeatured() {
+        return BookRepository.findFirstByIsFeaturedTrue();
+    }
 }

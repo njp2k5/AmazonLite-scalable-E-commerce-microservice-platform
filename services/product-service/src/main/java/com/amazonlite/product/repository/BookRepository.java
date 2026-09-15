@@ -11,4 +11,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
     Optional<Book> findByName(String name);
+    java.util.List<Book> findByIsBestsellerTrue();
+    Optional<Book> findFirstByIsFeaturedTrue();
 }

@@ -11,14 +11,20 @@ import com.amazonlite.gateway.filter.OrderAuthFilter;
 @SpringBootApplication
 public class GatewayApplication {
 
-    @org.springframework.beans.factory.annotation.Value("${app.services.product-service-url:http://localhost:8081}")
+    @org.springframework.beans.factory.annotation.Value("${app.services.product-service-url:lb://product-service}")
     private String productServiceUrl;
 
-    @org.springframework.beans.factory.annotation.Value("${app.services.order-service-url:http://localhost:8083}")
+    @org.springframework.beans.factory.annotation.Value("${app.services.order-service-url:lb://order-service}")
     private String orderServiceUrl;
 
-    @org.springframework.beans.factory.annotation.Value("${app.services.notification-service-url:http://localhost:8084}")
+    @org.springframework.beans.factory.annotation.Value("${app.services.notification-service-url:lb://notification-service}")
     private String notificationServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.services.auth-service-url:lb://auth-service}")
+    private String authServiceUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.services.cart-service-url:lb://cart-service}")
+    private String cartServiceUrl;
 
     public static void main(String[] args) {
         SpringApplication.run(GatewayApplication.class, args);
@@ -29,8 +35,9 @@ public class GatewayApplication {
         return builder.routes()
                 // Auth routes - public endpoints (no JWT validation)
                 .route("auth", r -> r
-                        .path("/auth/**")
-                        .uri(productServiceUrl))
+                        .path("/api/auth/**")
+                        .filters(f -> f.stripPrefix(1))
+                        .uri(authServiceUrl))
 
                 // Public product browsing routes - no JWT validation required
                 .route("products-public", r -> r
@@ -60,7 +67,7 @@ public class GatewayApplication {
                 .route("cart-protected", r -> r
                         .path("/api/cart/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))
-                        .uri(productServiceUrl))
+                        .uri(cartServiceUrl))
                 .route("buy-protected", r -> r
                         .path("/api/buy/**")
                         .filters(f -> f.stripPrefix(1).filter(jwtValidationFilter.apply(new JwtValidationFilter.Config())))

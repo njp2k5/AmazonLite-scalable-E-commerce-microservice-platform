@@ -51,10 +51,12 @@ def seed():
     
     print("Inserting books...")
     for b in books:
+        is_featured = b[0] == "The Midnight Library"
+        is_bestseller = b[0] in ["The Great Gatsby", "1984", "Sapiens", "Atomic Habits", "Dune", "The Alchemist", "To Kill a Mockingbird", "Pride and Prejudice"]
         cursor.execute('''
-            INSERT INTO Books (name, description, price, stock, category, image_url, isbn, author, publisher, format, pages, language, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
-        ''', (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], datetime.now(), datetime.now()))
+            INSERT INTO Books (name, description, price, stock, category, is_bestseller, is_featured, image_url, isbn, author, publisher, format, pages, language, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+        ''', (b[0], b[1], b[2], b[3], b[4], is_bestseller, is_featured, b[5], b[6], b[7], b[8], b[9], b[10], b[11], datetime.now(), datetime.now()))
         
         book_id = cursor.fetchone()[0]
         for img in b[12]:

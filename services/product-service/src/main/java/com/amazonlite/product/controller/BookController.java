@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/products")
+@CrossOrigin(origins = "*")
 public class BookController {
 
     private final BookService bookService;
@@ -65,5 +66,14 @@ public class BookController {
         } catch (java.util.NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Book not found");
         }
+    }
+    @GetMapping("/bestsellers")
+    public Object getBestsellers() {
+        return bookService.getBestsellers();
+    }
+
+    @GetMapping("/featured")
+    public Object getFeatured() {
+        return bookService.getFeatured().orElse(null);
     }
 }

@@ -2,14 +2,20 @@ package com.amazonlite.product.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(
@@ -38,8 +44,19 @@ public class Book {
     @Column(nullable = false, length = 100)
     private String category;
 
+    @Column(name = "is_bestseller", nullable = false)
+    private boolean isBestseller = false;
+
+    @Column(name = "is_featured", nullable = false)
+    private boolean isFeatured = false;
+
     @Column(name = "image_url", length = 500)
     private String imageUrl;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "book_images", joinColumns = @JoinColumn(name = "book_id"))
+    @Column(name = "image_url", length = 500)
+    private List<String> images = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -68,12 +85,14 @@ public class Book {
     public Book() {
     }
 
-    public Book(String name, String description, double price, int stock, String category, String imageUrl, String isbn, String author, String publisher, String format, Integer pages, String language) {
+    public Book(String name, String description, double price, int stock, String category, boolean isBestseller, boolean isFeatured, String imageUrl, String isbn, String author, String publisher, String format, Integer pages, String language) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.category = category;
+        this.isBestseller = isBestseller;
+        this.isFeatured = isFeatured;
         this.imageUrl = imageUrl;
         this.isbn = isbn;
         this.author = author;
@@ -142,12 +161,36 @@ public class Book {
         this.category = category;
     }
 
+    public boolean isBestseller() {
+        return isBestseller;
+    }
+
+    public void setBestseller(boolean bestseller) {
+        isBestseller = bestseller;
+    }
+
+    public boolean isFeatured() {
+        return isFeatured;
+    }
+
+    public void setFeatured(boolean featured) {
+        isFeatured = featured;
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
     }
 
     public LocalDateTime getCreatedAt() {
