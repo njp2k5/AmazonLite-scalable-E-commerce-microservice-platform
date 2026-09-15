@@ -9,7 +9,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
-@CrossOrigin(origins = "*")
 public class BookController {
 
     private final BookService bookService;
