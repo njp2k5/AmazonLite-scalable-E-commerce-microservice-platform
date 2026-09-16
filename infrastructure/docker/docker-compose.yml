@@ -12,6 +12,26 @@ services:
     networks:
       - amazonlite-network
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: amazonlite
+    ports:
+      - "5432:5432"
+    networks:
+      - amazonlite-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - amazonlite-network
+
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka
@@ -33,6 +53,35 @@ services:
     networks:
       - amazonlite-network
 
+  registry-service:
+    build:
+      context: ../../services/registry-service
+      dockerfile: Dockerfile
+    container_name: registry-service
+    ports:
+      - "8761:8761"
+    networks:
+      - amazonlite-network
+
+  auth-service:
+    build:
+      context: ../../services/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - ../../services/.env
+    environment:
+      SPRING_APPLICATION_NAME: auth-service
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    depends_on:
+      - registry-service
+      - postgres
+    networks:
+      - amazonlite-network
+
   product-service:
     build:
       context: ../../services/product-service
@@ -44,7 +93,10 @@ services:
       - ../../services/.env
     environment:
       SPRING_APPLICATION_NAME: product-service
-      EUREKA_CLIENT_ENABLED: "false"
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    depends_on:
+      - registry-service
     networks:
       - amazonlite-network
 
@@ -59,8 +111,10 @@ services:
       - ../../services/.env
     environment:
       SPRING_APPLICATION_NAME: gateway-service
-      EUREKA_CLIENT_ENABLED: "false"
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
     depends_on:
+      - registry-service
       - product-service
     networks:
       - amazonlite-network

@@ -8,23 +8,36 @@ spring:
     name: gateway-service
   cloud:
     gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
       routes:
         - id: product-service
-          uri: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+          uri: lb://product-service
           predicates:
             - Path=/api/products/**
           filters:
             - StripPrefix=1
 
         - id: order-service
-          uri: ${ORDER_SERVICE_URL:http://localhost:8083}
+          uri: lb://order-service
           predicates:
             - Path=/api/orders/**
           filters:
             - StripPrefix=1
 
         - id: notification-service
-          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+          uri: lb://notification-service
           predicates:
             - Path=/api/notifications/**
           filters:
@@ -33,9 +46,32 @@ spring:
               args:
                 role: ADMIN
 
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - StripPrefix=1
+
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/api/cart/**
+          filters:
+            - StripPrefix=1
+
 eureka:
   client:
-    enabled: false
+    enabled: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
 
 # JWT Configuration
 jwt:
@@ -58,4 +94,10 @@ springdoc:
         url: /order-service/v3/api-docs
       - name: Notification Service
         url: /notification-service/v3/api-docs
+      - name: Auth Service
+        url: /auth-service/v3/api-docs
+      - name: Inventory Service
+        url: /inventory-service/v3/api-docs
+      - name: Cart Service
+        url: /cart-service/v3/api-docs
 

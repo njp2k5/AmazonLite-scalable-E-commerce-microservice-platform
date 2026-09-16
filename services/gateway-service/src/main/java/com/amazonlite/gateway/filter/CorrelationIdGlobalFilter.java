@@ -23,7 +23,12 @@ public class CorrelationIdGlobalFilter implements GlobalFilter, Ordered {
         ServerHttpRequest modifiedRequest = request.mutate().header(HEADER, correlationId).build();
         ServerWebExchange modifiedExchange = exchange.mutate().request(modifiedRequest).build();
 
-        return chain.filter(modifiedExchange).doOnSuccess(aVoid -> modifiedExchange.getResponse().getHeaders().add(HEADER, correlationId));
+        modifiedExchange.getResponse().beforeCommit(() -> {
+            modifiedExchange.getResponse().getHeaders().add(HEADER, correlationId);
+            return Mono.empty();
+        });
+
+        return chain.filter(modifiedExchange);
     }
 
     @Override

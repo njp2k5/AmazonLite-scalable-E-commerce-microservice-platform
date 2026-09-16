@@ -8,6 +8,6 @@ RUN mvn clean package -Dmaven.test.skip=true
 # Runtime stage
 FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
-COPY --from=builder /build/target/product-service-*.jar app.jar
-EXPOSE 8081
+COPY --from=builder /build/target/auth-service-*.jar app.jar
+EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]

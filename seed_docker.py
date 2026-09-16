@@ -1,0 +1,142 @@
+"""
+Seed the Docker postgres database (the one the Java backend actually reads from).
+This is at localhost:5432/amazonlite.
+"""
+import psycopg2
+from datetime import datetime
+
+conn = psycopg2.connect(
+    host="localhost",
+    port=5432,
+    dbname="amazonlite",
+    user="postgres",
+    password="password"
+)
+cursor = conn.cursor()
+
+print("Truncating Books table...")
+cursor.execute("TRUNCATE TABLE books RESTART IDENTITY CASCADE;")
+
+secondary_images = [
+    "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=800"
+]
+
+# Books with Amazon CDN images (verified working for hotlinking)
+amazon_books = [
+    ("The Great Gatsby",      "A story of the wealthy Jay Gatsby and his love for the beautiful Daisy Buchanan.", 10.99, 100, "fiction",       "https://m.media-amazon.com/images/I/81af+MCATTL._AC_UF1000,1000_QL80_.jpg", "9780743273565", "F. Scott Fitzgerald", "Scribner",              "Paperback", 180),
+    ("To Kill a Mockingbird", "The unforgettable novel of a childhood in a sleepy Southern town.",               12.99, 120, "fiction",       "https://m.media-amazon.com/images/I/81gepf1eMqL._AC_UF1000,1000_QL80_.jpg", "9780060935467", "Harper Lee",           "Harper Perennial",      "Paperback", 336),
+    ("A Brief History of Time","Stephen Hawking's classic work explains complex concepts of cosmology.",         14.99,  80, "science",       "https://m.media-amazon.com/images/I/81nZ-929IEL._AC_UF1000,1000_QL80_.jpg", "9780553380163", "Stephen Hawking",       "Bantam",                "Paperback", 212),
+    ("The Hobbit",             "A great modern classic and the prelude to The Lord of the Rings.",               11.99, 200, "fiction",       "https://m.media-amazon.com/images/I/710+HcoP38L._AC_UF1000,1000_QL80_.jpg", "9780547928227", "J.R.R. Tolkien",        "Houghton Mifflin",      "Paperback", 300),
+    ("Pride and Prejudice",    "Few have failed to be charmed by Elizabeth Bennet in Austen's beloved classic.", 8.99,  90, "romance",       "https://m.media-amazon.com/images/I/71Q1tPupKjL._AC_UF1000,1000_QL80_.jpg", "9780141439518", "Jane Austen",           "Penguin Classics",      "Paperback", 432),
+    ("The Catcher in the Rye","The hero-narrator of sixteen, a native New Yorker named Holden Caulfield.",      10.50, 110, "fiction",       "https://m.media-amazon.com/images/I/81OthjkJBuL._AC_UF1000,1000_QL80_.jpg", "9780316769488", "J.D. Salinger",         "Little, Brown",         "Paperback", 277),
+    ("Sapiens",                "A Brief History of Humankind explores how biology and history have defined us.", 19.99,  75, "history",       "https://m.media-amazon.com/images/I/713jIoMO3UL._AC_UF1000,1000_QL80_.jpg", "9780062316097", "Yuval Noah Harari",     "Harper",                "Paperback", 464),
+    ("The Alchemist",          "Paulo Coelho's enchanting novel has inspired a devoted following worldwide.",    13.50, 130, "fiction",       "https://m.media-amazon.com/images/I/71aFt4+OTOL._AC_UF1000,1000_QL80_.jpg", "9780062315007", "Paulo Coelho",          "HarperOne",             "Paperback", 197),
+    ("Atomic Habits",          "No matter your goals, Atomic Habits offers a proven framework for improving.",  16.99, 250, "self-help",     "https://m.media-amazon.com/images/I/81YkqyaFVEL._AC_UF1000,1000_QL80_.jpg", "9780735211292", "James Clear",           "Avery",                 "Hardcover", 320),
+    ("The Martian",            "Astronaut Mark Watney must survive alone on Mars after being left for dead.",   14.00, 180, "science fiction","https://m.media-amazon.com/images/I/81z4kE4DveL._AC_UF1000,1000_QL80_.jpg", "9780553418026", "Andy Weir",             "Crown Publishing",      "Hardcover", 369),
+    ("Educated",               "A memoir about a young girl who leaves her survivalist family to earn a PhD.",  16.00, 150, "biography",     "https://m.media-amazon.com/images/I/71-0iE-t9qL._AC_UF1000,1000_QL80_.jpg", "9780399590504", "Tara Westover",         "Random House",          "Hardcover", 352),
+    ("Project Hail Mary",      "Ryland Grace is the sole survivor on a last-chance mission to save humanity.", 17.50, 190, "science fiction","https://m.media-amazon.com/images/I/81PzHjI21TL._AC_UF1000,1000_QL80_.jpg", "9780593135204", "Andy Weir",             "Ballantine Books",      "Hardcover", 496),
+]
+
+# Books with Unsplash images (always reliable)
+unsplash_books = [
+    ("To the Lighthouse",        "Virginia Woolf's masterpiece of modernist literature.",                       12.50,  61, "fiction",       None, "9780183281708", "Virginia Woolf",        "Classic Books", "Paperback", 199),
+    ("Moby-Dick",                "The epic tale of Captain Ahab's obsessive quest for the white whale.",        14.20,  63, "fiction",       None, "9780535589513", "Herman Melville",       "Classic Books", "Paperback", 755),
+    ("War and Peace",            "A broad panorama of Russian life during the Napoleonic era.",                  25.00,  36, "fiction",       None, "9780930041016", "Leo Tolstoy",           "Classic Books", "Paperback", 664),
+    ("The Odyssey",              "Homer's epic poem of Odysseus's long journey home from the Trojan War.",       10.99, 146, "fiction",       None, "9780851506091", "Homer",                 "Classic Books", "Paperback", 573),
+    ("The Brothers Karamazov",   "A passionate philosophical novel set in 19th century Russia.",                 18.50, 148, "fiction",       None, "9780677147319", "Fyodor Dostoevsky",    "Classic Books", "Paperback", 227),
+    ("Crime and Punishment",     "A novel about the mental anguish of Rodion Raskolnikov.",                      15.00, 145, "fiction",       None, "9780220667373", "Fyodor Dostoevsky",    "Classic Books", "Paperback", 373),
+    ("Madame Bovary",            "Gustave Flaubert's masterpiece of provincial life and romantic disillusion.",  11.20, 103, "fiction",       None, "9780650477471", "Gustave Flaubert",     "Classic Books", "Paperback", 696),
+    ("The Divine Comedy",        "Dante's journey through Hell, Purgatory, and Paradise.",                       19.99, 162, "poetry",        None, "9780544589337", "Dante Alighieri",       "Classic Books", "Paperback", 359),
+    ("The Iliad",                "Homer's epic about the Trojan War and the wrath of Achilles.",                 11.50, 171, "poetry",        None, "9780123427254", "Homer",                 "Classic Books", "Paperback", 591),
+    ("Don Quixote",              "Miguel de Cervantes's classic tale of a delusional knight-errant.",            16.75, 132, "fiction",       None, "9780204056218", "Miguel de Cervantes",   "Classic Books", "Paperback", 474),
+    ("One Hundred Years of Solitude","Gabriel García Márquez's magical realist epic.",                           14.50,  92, "fiction",       None, "9780781833415", "Gabriel Garcia Marquez","Classic Books", "Paperback", 391),
+    ("The Sound and the Fury",   "William Faulkner's modernist novel of a decaying Southern family.",            13.00,  25, "fiction",       None, "9780189468668", "William Faulkner",      "Classic Books", "Paperback", 175),
+    ("Catch-22",                 "Joseph Heller's satirical war novel about the absurdity of bureaucracy.",      12.99, 161, "fiction",       None, "9780884797566", "Joseph Heller",         "Classic Books", "Paperback", 293),
+    ("Beloved",                  "Toni Morrison's Pulitzer Prize-winning novel about a former slave.",           14.00, 159, "fiction",       None, "9780804321664", "Toni Morrison",         "Classic Books", "Paperback", 423),
+    ("Jane Eyre",                "Charlotte Brontë's novel of romance, independence, and moral growth.",          9.50, 139, "fiction",       None, "9780958152477", "Charlotte Bronte",      "Classic Books", "Paperback", 261),
+    ("Wuthering Heights",        "Emily Brontë's haunting tale of doomed love and revenge on the moors.",         8.99,  27, "fiction",       None, "9780286745879", "Emily Bronte",          "Classic Books", "Paperback", 389),
+    ("Great Expectations",       "Charles Dickens's coming-of-age story of Pip in Victorian England.",           10.00, 101, "fiction",       None, "9780813793221", "Charles Dickens",       "Classic Books", "Paperback", 219),
+    ("The Grapes of Wrath",      "John Steinbeck's Pulitzer Prize-winning novel of the Great Depression.",       13.50, 112, "fiction",       None, "9780440856165", "John Steinbeck",        "Classic Books", "Paperback", 559),
+    ("Invisible Man",            "Ralph Ellison's novel about an unnamed African American protagonist.",          15.50,  65, "fiction",       None, "9780555305254", "Ralph Ellison",         "Classic Books", "Paperback", 359),
+    ("Ulysses",                  "James Joyce's monumental modernist masterpiece set in Dublin.",                 18.00, 140, "fiction",       None, "9780757754978", "James Joyce",           "Classic Books", "Paperback", 193),
+    ("Frankenstein",             "Mary Shelley's classic Gothic novel about creation and responsibility.",         8.50, 119, "science fiction",None, "9780698545311", "Mary Shelley",          "Classic Books", "Paperback", 629),
+    ("Dracula",                  "Bram Stoker's seminal vampire novel that defined the genre.",                    9.00, 108, "horror",        None, "9780938871226", "Bram Stoker",           "Classic Books", "Paperback", 694),
+    ("The Picture of Dorian Gray","Oscar Wilde's philosophical novel about beauty, corruption, and art.",         10.50, 167, "fiction",       None, "9780454193554", "Oscar Wilde",           "Classic Books", "Paperback", 448),
+    ("Brave New World",          "Aldous Huxley's chilling dystopian vision of a controlled future society.",    12.00,  87, "science fiction",None, "9780881869612", "Aldous Huxley",         "Classic Books", "Paperback", 342),
+    ("Fahrenheit 451",           "Ray Bradbury's novel about a future society that burns books.",                 11.50,  79, "science fiction",None, "9780856407691", "Ray Bradbury",          "Classic Books", "Paperback", 189),
+    ("The Lord of the Rings",    "J.R.R. Tolkien's high fantasy epic of the One Ring and Middle-earth.",         29.99, 199, "fantasy",       None, "9780586289658", "J.R.R. Tolkien",        "Classic Books", "Paperback", 403),
+    ("Harry Potter and the Sorcerer's Stone","J.K. Rowling's magical tale of a boy who discovers he's a wizard.",10.99,112, "fantasy",       None, "9780371662252", "J.K. Rowling",          "Classic Books", "Paperback", 221),
+    ("The Chronicles of Narnia", "C.S. Lewis's beloved fantasy series set in the magical world of Narnia.",      25.00,  10, "fantasy",       None, "9780969958919", "C.S. Lewis",            "Classic Books", "Paperback", 664),
+    ("Alice's Adventures in Wonderland","Lewis Carroll's surreal children's book of a girl's fantastical journey.",7.99,29, "fantasy",       None, "9780506074800", "Lewis Carroll",          "Classic Books", "Paperback", 200),
+    ("The Little Prince",        "Antoine de Saint-Exupéry's philosophical novella about love and loss.",         8.99,  50, "children",      None, "9780185069377", "Antoine de Saint-Exupery","Classic Books","Paperback", 621),
+    ("Slaughterhouse-Five",      "Kurt Vonnegut's anti-war novel with time-travel and dark satire.",             13.99, 133, "fiction",       None, "9780992381814", "Kurt Vonnegut",         "Classic Books", "Paperback", 769),
+    ("The Handmaid's Tale",      "Margaret Atwood's dystopian novel set in the theocratic Republic of Gilead.",  14.99,  93, "fiction",       None, "9780747236398", "Margaret Atwood",       "Classic Books", "Paperback", 608),
+    ("The Bell Jar",             "Sylvia Plath's semi-autobiographical novel about mental illness.",              11.99,  62, "fiction",       None, "9780616147186", "Sylvia Plath",          "Classic Books", "Paperback", 737),
+    ("The Stranger",             "Albert Camus's existentialist novel about a man who kills without remorse.",    9.99, 107, "fiction",       None, "9780151938019", "Albert Camus",          "Classic Books", "Paperback", 624),
+    ("A Tale of Two Cities",     "Charles Dickens's historical novel set during the French Revolution.",          8.99,  40, "fiction",       None, "9780666704858", "Charles Dickens",       "Classic Books", "Paperback", 721),
+    ("Les Misérables",           "Victor Hugo's epic historical novel of justice, love, and revolution.",        19.99,  91, "fiction",       None, "9780488428406", "Victor Hugo",           "Classic Books", "Paperback", 430),
+    ("Anna Karenina",            "Leo Tolstoy's tragic romance about passion, betrayal, and Russian society.",   16.50,  69, "fiction",       None, "9780334199007", "Leo Tolstoy",           "Classic Books", "Paperback", 766),
+    ("Middlemarch",              "George Eliot's monumental study of provincial life in 19th-century England.",  14.50, 172, "fiction",       None, "9780189196358", "George Eliot",          "Classic Books", "Paperback", 181),
+    ("In Search of Lost Time",   "Marcel Proust's monumental, deeply introspective work of fiction.",           35.00,  36, "fiction",       None, "9780212701496", "Marcel Proust",         "Classic Books", "Paperback", 405),
+    ("The Trial",                "Franz Kafka's surreal bureaucratic nightmare about accusation and guilt.",      10.50, 149, "fiction",       None, "9780894044835", "Franz Kafka",           "Classic Books", "Paperback", 429),
+    ("The Metamorphosis",        "Franz Kafka's novella about a man who wakes up transformed into a bug.",        7.50, 120, "fiction",       None, "9780226218272", "Franz Kafka",           "Classic Books", "Paperback", 476),
+    ("Heart of Darkness",        "Joseph Conrad's novella exploring the darkness of colonialism in Congo.",       8.50, 192, "fiction",       None, "9780890466365", "Joseph Conrad",         "Classic Books", "Paperback", 739),
+    ("Gulliver's Travels",       "Jonathan Swift's satirical travelogue to fantastical lands and peoples.",       9.50,  83, "fiction",       None, "9780428958072", "Jonathan Swift",        "Classic Books", "Paperback", 349),
+    ("Robinson Crusoe",          "Daniel Defoe's classic castaway survival novel on a deserted island.",          8.50, 126, "fiction",       None, "9780247449797", "Daniel Defoe",          "Classic Books", "Paperback", 623),
+    ("The Count of Monte Cristo","Alexandre Dumas's swashbuckling tale of injustice and revenge.",               18.50, 127, "fiction",       None, "9780185531641", "Alexandre Dumas",       "Classic Books", "Paperback", 512),
+    ("The Canterbury Tales",     "Geoffrey Chaucer's collection of stories told by pilgrims on a journey.",      12.50, 161, "poetry",        None, "9780655591925", "Geoffrey Chaucer",      "Classic Books", "Paperback", 389),
+    ("Leaves of Grass",          "Walt Whitman's revolutionary free-verse poetry collection.",                   11.50,  64, "poetry",        None, "9780747664701", "Walt Whitman",          "Classic Books", "Paperback", 542),
+    ("The Sun Also Rises",       "Ernest Hemingway's novel of the Lost Generation in post-WWI Europe.",          12.99, 179, "fiction",       None, "9780568941348", "Ernest Hemingway",      "Classic Books", "Paperback", 624),
+    ("On the Road",              "Jack Kerouac's Beat Generation classic of cross-country travels.",              13.50,  51, "fiction",       None, "9780820394577", "Jack Kerouac",          "Classic Books", "Paperback", 736),
+    ("The Old Man and the Sea",  "Ernest Hemingway's Nobel Prize-winning novella about an aging fisherman.",      9.99, 149, "fiction",       None, "9780433240197", "Ernest Hemingway",      "Classic Books", "Paperback", 364),
+    ("The Call of the Wild",     "Jack London's adventure novel of a domestic dog turned sled dog in the Yukon.",  8.99,  84, "fiction",       None, "9780538937031", "Jack London",           "Classic Books", "Paperback", 779),
+    ("The Secret Garden",        "Frances Hodgson Burnett's beloved children's novel about healing and growth.",   7.99, 175, "children",      None, "9780416114056", "Frances Hodgson Burnett","Classic Books","Paperback", 798),
+]
+
+# Bestseller titles
+BESTSELLERS = {
+    "The Great Gatsby", "To Kill a Mockingbird", "Pride and Prejudice",
+    "Sapiens", "The Alchemist", "Atomic Habits",
+    "Moby-Dick", "War and Peace", "The Odyssey"
+}
+# Featured book
+FEATURED = "The Odyssey"
+
+all_books = amazon_books + [(b[0], b[1], b[2], b[3], b[4], None, b[6], b[7], b[8], b[9], b[10]) for b in unsplash_books]
+
+print(f"Inserting {len(all_books)} books...")
+idx = 0
+for b in amazon_books:
+    title, desc, price, stock, cat, image_url, isbn, author, publisher, fmt, pages = b
+    is_bestseller = title in BESTSELLERS
+    is_featured = title == FEATURED
+    cursor.execute('''
+        INSERT INTO books (name, description, price, stock, category, is_bestseller, is_featured, image_url, isbn, author, publisher, format, pages, language, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (title, desc, price, stock, cat, is_bestseller, is_featured, image_url, isbn, author, publisher, fmt, pages, "English", datetime.now(), datetime.now()))
+    book_id = cursor.fetchone()[0]
+    for img in secondary_images:
+        cursor.execute("INSERT INTO book_images (book_id, image_url) VALUES (%s, %s)", (book_id, img))
+    idx += 1
+
+for i, b in enumerate(unsplash_books):
+    title, desc, price, stock, cat, _, isbn, author, publisher, fmt, pages = b
+    # Use a unique unsplash image per book
+    image_url = f"https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800&random={i}"
+    is_bestseller = title in BESTSELLERS
+    is_featured = title == FEATURED
+    cursor.execute('''
+        INSERT INTO books (name, description, price, stock, category, is_bestseller, is_featured, image_url, isbn, author, publisher, format, pages, language, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+    ''', (title, desc, price, stock, cat, is_bestseller, is_featured, image_url, isbn, author, publisher, fmt, pages, "English", datetime.now(), datetime.now()))
+    book_id = cursor.fetchone()[0]
+    for img in secondary_images:
+        cursor.execute("INSERT INTO book_images (book_id, image_url) VALUES (%s, %s)", (book_id, img))
+    idx += 1
+
+conn.commit()
+cursor.close()
+conn.close()
+print(f"Done! Seeded {idx} books into local Docker postgres.")

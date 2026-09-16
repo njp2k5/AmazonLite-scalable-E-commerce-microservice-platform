@@ -8,7 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * Main Spring Boot application entry point for the Product Service.
+ * Main Spring Boot application entry point for the Book Service.
  * 
  * Enables JPA repositories for database operations.
  */
