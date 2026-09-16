@@ -1,0 +1,73 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'services/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'services/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-push:
+    name: Build, Verify and Push Backend
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Run Backend Test Suite
+        run: |
+          for dir in services/*-service; do
+            if [ -d "$dir" ] && [ -f "$dir/pom.xml" ]; then
+              echo "Testing $dir..."
+              (cd "$dir" && mvn test -B)
+            fi
+          done
+
+      - name: Get Commit SHA
+        id: vars
+        run: echo "SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Convert Repository Name to Lowercase
+        run: |
+          echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        working-directory: ./services/gateway-service
+        run: |
+          docker build -t ghcr.io/${{ env.REPO_LOWER }}:${{ env.SHA }} -t ghcr.io/${{ env.REPO_LOWER }}:latest .
+
+      - name: Push Docker Image
+        run: |
+          docker push ghcr.io/${{ env.REPO_LOWER }}:${{ env.SHA }}
+          docker push ghcr.io/${{ env.REPO_LOWER }}:latest
+
+      - name: Verify Push (Local Pull)
+        run: |
+          # Remove locally to ensure we are pulling from the remote registry
+          docker rmi ghcr.io/${{ env.REPO_LOWER }}:${{ env.SHA }}
+          docker rmi ghcr.io/${{ env.REPO_LOWER }}:latest
+          docker pull ghcr.io/${{ env.REPO_LOWER }}:${{ env.SHA }}
+          echo "Verification successful: Image pulled from GHCR."

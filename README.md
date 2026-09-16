@@ -1873,3 +1873,31 @@ To make the pipeline operational, configure the following in your GitHub Reposit
 ### 30-Second Interview Explanation
 
 > *"I designed a multi-service CI/CD pipeline using GitHub Actions that treats Docker Compose as a first-class citizen. Rather than managing 8 separate build pipelines, the workflow first iterates through the Spring Boot services to execute their Maven test suites. Once passing, it injects environment variables into `docker-compose.yml` to dynamically tag, build, and push all microservice images to GitHub Container Registry simultaneously. For deployment, it uses SSH to trigger a compose pull and update on the server. Compose natively handles the zero-downtime rolling restart of only the changed services. It’s a clean, declarative approach that makes multi-container rollbacks as simple as passing an older commit SHA."*
+
+---
+
+## Dedicated Backend CI Flow (`backend-ci.yml`)
+
+As an alternative to the multi-service deployment above, a strictly CI-focused pipeline is provided at `.github/workflows/backend-ci.yml`. This workflow focuses solely on testing, building, and publishing the primary backend gateway image to GitHub Container Registry (GHCR).
+
+### GitHub Actions CI Flow
+- Triggers on pushes and pull requests to the main branch affecting the `services/` directory.
+- Runs the complete backend test suite across all Spring Boot microservices.
+- Authenticates with GHCR securely using the built-in `GITHUB_TOKEN`.
+- Builds the `gateway-service` as the primary API artifact.
+
+### GHCR Image Naming & Tags
+- **Naming:** The Docker image is published exactly as the repository name (in lowercase): `ghcr.io/<github-username>/<repository-name>`.
+- **`SHA` vs `latest` Tags:** Every successful build pushes two tags. The `<commit-sha>` tag acts as an immutable, uniquely identifiable version tied directly to a git commit, making rollbacks and tracking reliable. The `latest` tag is a floating pointer to the most recently built image, useful for quick local testing.
+
+### Pulling the Image
+You can find the published package by navigating to your GitHub repository's **Packages** tab (or your profile's Packages section). 
+
+To manually pull the image locally:
+```bash
+# Pull the latest version
+docker pull ghcr.io/<github-username>/<repository-name>:latest
+
+# Pull a specific immutable version
+docker pull ghcr.io/<github-username>/<repository-name>:<commit-sha>
+```
