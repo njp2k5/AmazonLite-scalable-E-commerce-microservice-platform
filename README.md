@@ -1822,3 +1822,54 @@ curl http://localhost:8080/api/orders/me \
 | Backend Testing | JUnit 5, Spring Boot Test, spring-kafka-test (embedded) |
 | Deployment | Docker Compose (11 containers on bridge network) |
 | Design Theme | Premium literary bookstore — charcoal + gold palette |
+
+## Backend CI/CD Pipeline
+
+The backend repository implements a robust, multi-service CI/CD pipeline using GitHub Actions, leveraging `docker-compose` to seamlessly build, push, and deploy all 8 microservices simultaneously.
+
+### Pipeline Architecture
+
+The pipeline is split into three logical stages: **Code Quality**, **Build & Push**, and **Deploy**.
+
+1. **Test (`test`)**:
+   - Triggers on `push` and `pull_request` to `main`.
+   - Iterates through all 8 Spring Boot microservices (`services/*-service`).
+   - Runs `mvn test -B` for each service to ensure unit and integration tests pass.
+   - _Note: If any microservice fails testing, the pipeline halts immediately._
+
+2. **Build & Push (`build-and-push`)**:
+   - Triggers only on `push` to `main` (after successful testing).
+   - Authenticates to the **GitHub Container Registry (GHCR)** using the repository's `GITHUB_TOKEN`.
+   - Uses `docker-compose build` and `docker-compose push` to build and upload images for all services at once.
+   - Images are tagged with the exact Git commit SHA (e.g., `sha-a1b2c3d`) ensuring full traceability.
+
+3. **Deployment (`deploy`)**:
+   - Connects to the target server via SSH (`appleboy/ssh-action`).
+   - Executes the `scripts/deploy.sh` script, passing the new `IMAGE_TAG` and `REGISTRY` variables.
+   - The script runs `docker-compose pull` and `docker-compose up -d`. Compose intelligently detects which images have changed, stops the old containers, and spins up the new ones while leaving unmodified services (like PostgreSQL or Redis) running uninterrupted.
+
+### Required GitHub Settings & Secrets
+
+To make the pipeline operational, configure the following in your GitHub Repository Settings (**Settings > Secrets and variables > Actions**):
+
+- `SERVER_HOST`: Target deployment server IP or domain.
+- `SERVER_USER`: SSH username (e.g., `ubuntu` or `root`).
+- `SERVER_SSH_KEY`: Private SSH key for server access.
+
+*Ensure your repository has Write access to packages (Settings > Actions > General > Workflow permissions -> "Read and write permissions").*
+
+### How Deployment & Rollback Work
+
+**Deployment**: The `deploy.sh` script is completely automated. By supplying the exact image tag to `docker-compose`, it fetches the exact immutable snapshot of your microservices tied to that specific commit.
+
+**Rollback**: Rollbacks are trivial.
+1. Revert the commit in GitHub (which naturally triggers the pipeline and deploys the previous state).
+2. Or manually SSH into the server and run:
+   ```bash
+   ./scripts/deploy.sh sha-<previous-commit-sha> ghcr.io/<owner>/amazonlite
+   ```
+   Docker Compose will instantly revert all 8 services to their previous versions.
+
+### 30-Second Interview Explanation
+
+> *"I designed a multi-service CI/CD pipeline using GitHub Actions that treats Docker Compose as a first-class citizen. Rather than managing 8 separate build pipelines, the workflow first iterates through the Spring Boot services to execute their Maven test suites. Once passing, it injects environment variables into `docker-compose.yml` to dynamically tag, build, and push all microservice images to GitHub Container Registry simultaneously. For deployment, it uses SSH to trigger a compose pull and update on the server. Compose natively handles the zero-downtime rolling restart of only the changed services. It’s a clean, declarative approach that makes multi-container rollbacks as simple as passing an older commit SHA."*
