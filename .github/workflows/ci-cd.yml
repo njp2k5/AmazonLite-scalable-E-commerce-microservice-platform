@@ -70,9 +70,10 @@ jobs:
 
       - name: Build and Push with Docker Compose
         run: |
-          # Use docker-compose to build all services defined with build contexts
-          docker-compose build
-          docker-compose push
+          # Use docker-compose to build only backend services to avoid frontend context errors
+          SERVICES="registry-service auth-service product-service order-service inventory-service notification-service cart-service gateway-service"
+          docker-compose build $SERVICES
+          docker-compose push $SERVICES
 
   deploy:
     name: Deploy Application
