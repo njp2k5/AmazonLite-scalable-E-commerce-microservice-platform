@@ -6,6 +6,7 @@ services:
       context: ./services/registry-service
       dockerfile: Dockerfile
     container_name: registry-service
+    image: ${REGISTRY:-amazonlite}/registry-service:${IMAGE_TAG:-latest}
     ports:
       - "8761:8761"
     networks:
@@ -36,6 +37,7 @@ services:
       context: ./services/auth-service
       dockerfile: Dockerfile
     container_name: auth-service
+    image: ${REGISTRY:-amazonlite}/auth-service:${IMAGE_TAG:-latest}
     ports:
       - "8082:8082"
     env_file:
@@ -63,6 +65,7 @@ services:
       context: ./services/product-service
       dockerfile: Dockerfile
     container_name: product-service
+    image: ${REGISTRY:-amazonlite}/product-service:${IMAGE_TAG:-latest}
     ports:
       - "8081:8081"
     env_file:
@@ -90,6 +93,7 @@ services:
       context: ./services/order-service
       dockerfile: Dockerfile
     container_name: order-service
+    image: ${REGISTRY:-amazonlite}/order-service:${IMAGE_TAG:-latest}
     ports:
       - "8083:8083"
     env_file:
@@ -117,6 +121,7 @@ services:
       context: ./services/inventory-service
       dockerfile: Dockerfile
     container_name: inventory-service
+    image: ${REGISTRY:-amazonlite}/inventory-service:${IMAGE_TAG:-latest}
     ports:
       - "8085:8085"
     env_file:
@@ -144,6 +149,7 @@ services:
       context: ./services/notification-service
       dockerfile: Dockerfile
     container_name: notification-service
+    image: ${REGISTRY:-amazonlite}/notification-service:${IMAGE_TAG:-latest}
     ports:
       - "8084:8084"
     env_file:
@@ -171,6 +177,7 @@ services:
       context: ./services/cart-service
       dockerfile: Dockerfile
     container_name: cart-service
+    image: ${REGISTRY:-amazonlite}/cart-service:${IMAGE_TAG:-latest}
     ports:
       - "8086:8086"
     env_file:
@@ -201,6 +208,7 @@ services:
       context: ./services/gateway-service
       dockerfile: Dockerfile
     container_name: gateway-service
+    image: ${REGISTRY:-amazonlite}/gateway-service:${IMAGE_TAG:-latest}
     ports:
       - "8080:8080"
     env_file:
@@ -230,6 +238,30 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
+    networks:
+      - amazonlite-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - amazonlite-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./infrastructure/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
     networks:
       - amazonlite-network
 

@@ -101,3 +101,14 @@ springdoc:
       - name: Cart Service
         url: /cart-service/v3/api-docs
 
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    export:
+      prometheus:
+        enabled: true

@@ -26,3 +26,14 @@ eureka:
 jwt:
   secret: ${JWT_SECRET:dGhpcy1pcy1hLXZlcnktc2VjdXJlLWtleS1mb3Itand0LW11c3QtYmUtYXQtbGVhc3QtMjU2LWJpdHM=}
   expiration: ${JWT_EXPIRATION:86400000}
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    export:
+      prometheus:
+        enabled: true
