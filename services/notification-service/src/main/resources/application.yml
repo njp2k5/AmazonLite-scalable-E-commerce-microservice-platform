@@ -21,3 +21,14 @@ spring:
 app:
   kafka:
     notification-topic: notifications
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    export:
+      prometheus:
+        enabled: true

@@ -21,3 +21,14 @@ spring:
 app:
   kafka:
     order-created-topic: order.created
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    export:
+      prometheus:
+        enabled: true
