@@ -1,14 +1,41 @@
 version: '3.8'
 
 services:
-  registry-service:
+  amazonlite-backend:
     build:
-      context: ./services/registry-service
+      context: ./
       dockerfile: Dockerfile
-    container_name: registry-service
-    image: ${REGISTRY:-amazonlite}/registry-service:${IMAGE_TAG:-latest}
+    container_name: amazonlite-backend
+    image: ${REGISTRY:-amazonlite}/backend:${IMAGE_TAG:-latest}
     ports:
-      - "8761:8761"
+      - "8080:8080" # Gateway
+      - "8761:8761" # Registry
+      - "8081:8081" # Product
+      - "8082:8082" # Auth
+      - "8083:8083" # Order
+      - "8084:8084" # Notification
+      - "8085:8085" # Inventory
+      - "8086:8086" # Cart
+    env_file:
+      - ./services/.env
+    environment:
+      # Use localhost because all services are in the same container now
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://localhost:8761/eureka/"
+      EUREKA_INSTANCE_HOSTNAME: "localhost"
+      EUREKA_CLIENT_ENABLED: "true"
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_NAME: "amazonlite"
+      DB_USERNAME: "postgres"
+      DB_USER: "postgres"
+      DB_PASSWORD: "password"
+      KAFKA_BOOTSTRAP_SERVERS: "localhost:9092"
+    depends_on:
+      - postgres
+      - redis
     networks:
       - amazonlite-network
 
@@ -29,203 +56,6 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
-    networks:
-      - amazonlite-network
-
-  auth-service:
-    build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
-    container_name: auth-service
-    image: ${REGISTRY:-amazonlite}/auth-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8082:8082"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: auth-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "auth-service"
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - postgres
-    networks:
-      - amazonlite-network
-
-  product-service:
-    build:
-      context: ./services/product-service
-      dockerfile: Dockerfile
-    container_name: product-service
-    image: ${REGISTRY:-amazonlite}/product-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8081:8081"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: product-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "product-service"
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - postgres
-    networks:
-      - amazonlite-network
-
-  order-service:
-    build:
-      context: ./services/order-service
-      dockerfile: Dockerfile
-    container_name: order-service
-    image: ${REGISTRY:-amazonlite}/order-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8083:8083"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: order-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "order-service"
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - postgres
-    networks:
-      - amazonlite-network
-
-  inventory-service:
-    build:
-      context: ./services/inventory-service
-      dockerfile: Dockerfile
-    container_name: inventory-service
-    image: ${REGISTRY:-amazonlite}/inventory-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8085:8085"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: inventory-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "inventory-service"
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - postgres
-    networks:
-      - amazonlite-network
-
-  notification-service:
-    build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile
-    container_name: notification-service
-    image: ${REGISTRY:-amazonlite}/notification-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8084:8084"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: notification-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "notification-service"
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - postgres
-    networks:
-      - amazonlite-network
-
-  cart-service:
-    build:
-      context: ./services/cart-service
-      dockerfile: Dockerfile
-    container_name: cart-service
-    image: ${REGISTRY:-amazonlite}/cart-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8086:8086"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: cart-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "cart-service"
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      DB_URL: "jdbc:postgresql://postgres:5432/amazonlite"
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_NAME: "amazonlite"
-      DB_USERNAME: "postgres"
-      DB_USER: "postgres"
-      DB_PASSWORD: "password"
-    depends_on:
-      - registry-service
-      - redis
-      - postgres
-    networks:
-      - amazonlite-network
-
-  gateway-service:
-    build:
-      context: ./services/gateway-service
-      dockerfile: Dockerfile
-    container_name: gateway-service
-    image: ${REGISTRY:-amazonlite}/gateway-service:${IMAGE_TAG:-latest}
-    ports:
-      - "8080:8080"
-    env_file:
-      - ./services/.env
-    environment:
-      SPRING_APPLICATION_NAME: gateway-service
-      EUREKA_CLIENT_ENABLED: "true"
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      EUREKA_INSTANCE_HOSTNAME: "gateway-service"
-    depends_on:
-      - registry-service
-      - product-service
-      - order-service
-      - auth-service
-      - inventory-service
-      - notification-service
-      - cart-service
     networks:
       - amazonlite-network
 

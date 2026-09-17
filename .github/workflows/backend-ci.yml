@@ -55,7 +55,7 @@ jobs:
           echo "REPO_LOWER=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build Docker Image
-        working-directory: ./services/gateway-service
+        working-directory: ./
         run: |
           docker build -t ghcr.io/${{ env.REPO_LOWER }}:${{ env.SHA }} -t ghcr.io/${{ env.REPO_LOWER }}:latest .
 

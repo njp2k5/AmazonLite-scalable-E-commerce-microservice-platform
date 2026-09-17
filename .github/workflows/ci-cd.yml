@@ -1,4 +1,4 @@
-﻿name: Backend CI/CD Pipeline
+name: Backend CI/CD Pipeline
 
 on:
   push:
@@ -62,24 +62,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'maven'
 
-      - name: Build JARs
-        run: |
-          echo "Packaging all microservices..."
-          for dir in services/*-service; do
-            if [ -d "$dir" ] && [ -f "$dir/pom.xml" ]; then
-              echo "Packaging service: $dir"
-              cd "$dir"
-              mvn clean package -DskipTests -B
-              cd ../..
-            fi
-          done
 
       - name: Set Image Tag
         id: vars
@@ -93,7 +76,7 @@ jobs:
           touch services/.env
           
           # Use docker-compose to build only backend services to avoid frontend context errors
-          SERVICES="registry-service auth-service product-service order-service inventory-service notification-service cart-service gateway-service"
+          SERVICES="amazonlite-backend"
           docker compose build $SERVICES
           docker compose push $SERVICES
 
