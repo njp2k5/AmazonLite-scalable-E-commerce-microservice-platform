@@ -72,8 +72,8 @@ jobs:
         run: |
           # Use docker-compose to build only backend services to avoid frontend context errors
           SERVICES="registry-service auth-service product-service order-service inventory-service notification-service cart-service gateway-service"
-          docker-compose build $SERVICES
-          docker-compose push $SERVICES
+          docker compose build $SERVICES
+          docker compose push $SERVICES
 
   deploy:
     name: Deploy Application
