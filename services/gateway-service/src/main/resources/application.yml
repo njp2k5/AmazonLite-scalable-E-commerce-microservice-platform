@@ -76,8 +76,19 @@ spring:
 eureka:
   client:
     enabled: true
+    # Allow Gateway to start even if Eureka is not yet available.
+    # The client will keep retrying in the background — does not block port binding.
+    should-enforce-registration-at-init: false
+    should-unregister-on-shutdown: true
+    initial-instance-info-replication-interval-seconds: 10
+    registry-fetch-interval-seconds: 10
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://registry-service:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 # JWT Configuration
 jwt:
