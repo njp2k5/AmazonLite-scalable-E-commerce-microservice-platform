@@ -2,6 +2,8 @@ server:
   port: 8083
 
 spring:
+  application:
+    name: order-service
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -22,6 +24,10 @@ app:
   kafka:
     order-created-topic: order.created
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://registry-service:8761/eureka/}
 
 management:
   endpoints:

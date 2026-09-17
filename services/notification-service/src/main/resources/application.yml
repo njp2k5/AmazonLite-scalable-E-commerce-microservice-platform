@@ -22,6 +22,10 @@ app:
   kafka:
     notification-topic: notifications
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://registry-service:8761/eureka/}
 
 management:
   endpoints:

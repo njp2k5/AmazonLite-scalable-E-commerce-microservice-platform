@@ -1901,3 +1901,32 @@ docker pull ghcr.io/<github-username>/<repository-name>:latest
 # Pull a specific immutable version
 docker pull ghcr.io/<github-username>/<repository-name>:<commit-sha>
 ```
+
+## Deployment and Testing
+
+This project is configured to run smoothly in a single-instance Docker Compose environment and easily scales to cloud platforms like Render.
+
+### Architecture
+- **Internal Services**: PostgreSQL (5432), Redis (6379), Auth (8082), Product (8081), Order (8083), Notification (8084), Inventory (8085), Cart (8086), and Eureka Registry (8761). These services operate within the internal docker network and should **not** be exposed publicly unless strictly required.
+- **Service Discovery**: The `registry-service` acts as the internal Eureka server. Backend services use `registry-service` as their default hostname to dynamically discover one another.
+- **Public API Gateway**: The `gateway-service` (8080) is the sole public entry point. It receives all external requests and routes them to the appropriate internal microservices via Eureka load balancing (e.g., `/api/products/**` to `product-service`).
+
+### Expected Production Configuration
+When deploying to cloud platforms like Render:
+- The expected production Gateway URL is: `https://amazonlite-scalable-e-commerce.onrender.com`
+- Set the `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` environment variable on all backend microservices to point to the live registry URL (e.g., `https://<your-registry-url>.onrender.com/eureka/`) instead of the internal default.
+
+### Frontend API URL
+The frontend application dynamically obtains its API URL via the `NEXT_PUBLIC_API_URL` environment variable.
+- **Local Development**: Safely defaults to `http://localhost:8080` if no environment variable is provided.
+- **Production**: Configure `NEXT_PUBLIC_API_URL=https://amazonlite-scalable-e-commerce.onrender.com` in your production environment settings.
+
+### Verifying Service Health
+Spring Boot Actuator is configured for core services. You can verify the health of an individual service by sending a GET request to its actuator health endpoint:
+- **Gateway Health**: `GET https://amazonlite-scalable-e-commerce.onrender.com/actuator/health`
+
+### Example API Request (via Gateway)
+```bash
+# Fetch paginated products through the public Gateway
+curl -s "https://amazonlite-scalable-e-commerce.onrender.com/api/products?page=0&size=10"
+```

@@ -21,7 +21,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://registry-service:8761/eureka/}
 
 jwt:
   secret: ${JWT_SECRET:dGhpcy1pcy1hLXZlcnktc2VjdXJlLWtleS1mb3Itand0LW11c3QtYmUtYXQtbGVhc3QtMjU2LWJpdHM=}
