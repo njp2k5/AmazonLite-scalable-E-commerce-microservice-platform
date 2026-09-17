@@ -62,6 +62,25 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build JARs
+        run: |
+          echo "Packaging all microservices..."
+          for dir in services/*-service; do
+            if [ -d "$dir" ] && [ -f "$dir/pom.xml" ]; then
+              echo "Packaging service: $dir"
+              cd "$dir"
+              mvn clean package -DskipTests -B
+              cd ../..
+            fi
+          done
+
       - name: Set Image Tag
         id: vars
         run: |
