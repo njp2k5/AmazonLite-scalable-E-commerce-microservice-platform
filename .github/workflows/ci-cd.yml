@@ -1,4 +1,4 @@
-name: Backend CI/CD Pipeline
+﻿name: Backend CI/CD Pipeline
 
 on:
   push:
@@ -97,52 +97,3 @@ jobs:
           docker compose build $SERVICES
           docker compose push $SERVICES
 
-  deploy:
-    name: Deploy Application
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set Image Tag
-        run: |
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "IMAGE_TAG=sha-$SHORT_SHA" >> $GITHUB_ENV
-
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: IMAGE_TAG, REGISTRY
-          script: |
-            mkdir -p ~/amazonlite-backend/scripts
-            
-      - name: Copy Deploy Script and Docker Compose
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "scripts/deploy.sh,docker-compose.yml"
-          target: "~/amazonlite-backend/"
-          
-      - name: Execute Deploy Script
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: IMAGE_TAG, REGISTRY
-          script: |
-            chmod +x ~/amazonlite-backend/scripts/deploy.sh
-            
-            # The repository owner should be lowercase for GHCR
-            export REGISTRY=$(echo "$REGISTRY" | tr '[:upper:]' '[:lower:]')
-            
-            cd ~/amazonlite-backend
-            ./scripts/deploy.sh "$IMAGE_TAG" "$REGISTRY"
