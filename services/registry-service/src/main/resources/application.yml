@@ -1,5 +1,10 @@
 server:
   port: 8761
+  # Bind to loopback only — Eureka is internal.
+  # All services inside this container reach it via localhost:8761.
+  # Render's external port scanner cannot see 127.0.0.1 ports,
+  # so only Gateway (bound to 0.0.0.0) is detected as the public entry point.
+  address: 127.0.0.1
 
 spring:
   application:
