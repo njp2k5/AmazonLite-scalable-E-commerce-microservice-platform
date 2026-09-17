@@ -1,5 +1,6 @@
 server:
-  port: 8080
+  port: ${PORT:8080}
+  address: 0.0.0.0
 
 spring:
   config:
@@ -22,6 +23,11 @@ spring:
               - OPTIONS
               - PATCH
       routes:
+        - id: product-service-direct
+          uri: lb://product-service
+          predicates:
+            - Path=/products/**
+
         - id: product-service
           uri: lb://product-service
           predicates:

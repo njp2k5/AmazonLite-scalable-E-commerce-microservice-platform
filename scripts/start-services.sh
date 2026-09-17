@@ -3,7 +3,6 @@
 # Setup signal handlers to gracefully terminate all child Java processes
 trap 'echo "Stopping all services..."; kill 0; exit 0' SIGTERM SIGINT
 
-export GATEWAY_PORT=${PORT:-8080}
 
 echo "Starting Registry Service..."
 java -jar registry-service.jar &
@@ -22,8 +21,8 @@ java -jar inventory-service.jar &
 java -jar notification-service.jar &
 java -jar cart-service.jar &
 
-echo "Starting Gateway Service on port $GATEWAY_PORT..."
-java -Dserver.port=$GATEWAY_PORT -jar gateway-service.jar &
+echo "Starting Gateway Service..."
+java -jar gateway-service.jar &
 
 echo "All services have been started. Container is now running."
 
