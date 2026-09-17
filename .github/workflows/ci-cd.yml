@@ -75,8 +75,14 @@ jobs:
           # Create a dummy .env file to satisfy docker-compose requirements during build
           touch services/.env
           
-          # Use docker-compose to build only backend services to avoid frontend context errors
           SERVICES="amazonlite-backend"
+          
+          # Build and push the specific SHA tag
+          docker compose build $SERVICES
+          docker compose push $SERVICES
+          
+          # Tag and push the latest tag for Render auto-deploys
+          export IMAGE_TAG="latest"
           docker compose build $SERVICES
           docker compose push $SERVICES
 

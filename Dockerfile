@@ -32,4 +32,6 @@ RUN chmod +x start-services.sh
 # Expose all original service ports
 EXPOSE 8080 8761 8081 8082 8083 8084 8085 8086
 
+LABEL org.opencontainers.image.source="https://github.com/njp2k5/AmazonLite-scalable-E-commerce-microservice-platform"
+
 CMD ["./start-services.sh"]
