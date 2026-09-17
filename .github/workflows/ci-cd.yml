@@ -45,7 +45,7 @@ jobs:
     name: Build and Push Docker Images
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: always()
     
     permissions:
       contents: read
@@ -62,13 +62,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-
-
-      - name: Set Image Tag
+      - name: Set Image Tag and Registry
         id: vars
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           echo "IMAGE_TAG=sha-$SHORT_SHA" >> $GITHUB_ENV
+          echo "REGISTRY=ghcr.io/$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build and Push with Docker Compose
         run: |
@@ -81,8 +80,10 @@ jobs:
           docker compose build $SERVICES
           docker compose push $SERVICES
           
-          # Tag and push the latest tag for Render auto-deploys
-          export IMAGE_TAG="latest"
-          docker compose build $SERVICES
-          docker compose push $SERVICES
+          # Tag and push the latest tag for Render auto-deploys (only on main branch)
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            export IMAGE_TAG="latest"
+            docker compose build $SERVICES
+            docker compose push $SERVICES
+          fi
 
